@@ -83,8 +83,24 @@ for f in [
         test[f] = test[f].astype(np.int64) * 1e-9
 
 #==============================================================================
-# 
+# to bins
 #==============================================================================
+# x = pd.concat([train, test])
+# x = x.reset_index(drop=True)
+
+# cut_cols = []
+# for c in x.columns[2:]:
+#     trainno = len(x.loc[:train.shape[0], c].unique())
+#     testno = len(x.loc[train.shape[0]:, c].unique())
+#     print(c, trainno, testno)
+#     if (trainno > 1000) or (testno > 1000):
+#         cut_cols.append(c)
+
+# for c in cut_cols:
+#     x[c] = pd.cut(x[c], 50, labels=False)
+
+# train = x.loc[:train.shape[0]].copy()
+# test = x.loc[train.shape[0]:].copy()
 
 #==============================================================================
 # transform dataformat
@@ -92,7 +108,7 @@ for f in [
 categories = [c for d, c in zip(train.dtypes, train.columns) if str(d).startswith('int')]
 numerics = []
 
-pd.DataFrame(data=categories, columns=['ffm_cols']).to_csv('ffm_cols.csv', index=False)
+pd.DataFrame(data=categories, columns=['ffm_cols']).to_csv('./ffm/ffm_cols.csv', index=False)
 
 currentcode = len(numerics)
 catdict = {}

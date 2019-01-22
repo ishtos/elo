@@ -133,6 +133,7 @@ features += [f'f41{i}_{j}.pkl' for i in (1, 2)
                                for j in ('Y', 'N')]
 # features += [f'f42{i}.pkl' for i in (1, 2)]
 
+# features += [f'f50{i}.pkl' for i in (2, )]
 
 # features = os.listdir('../remove_outlier_feature')
 
@@ -172,9 +173,10 @@ for f in [
 # =============================================================================
 # drop same values
 # =============================================================================
-drop_cols = [
+ffm_cols = pd.read_csv('./ffm/ffm_cols.csv')
 
-]
+drop_cols = []
+drop_cols += list(ffm_cols['ffm_cols'].values)
 
 for d in drop_cols:
     if f in cols:

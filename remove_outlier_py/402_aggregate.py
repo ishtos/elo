@@ -37,8 +37,7 @@ stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-union = pd.read_csv(
-    os.path.join(PATH, 'union.csv'))
+union = pd.read_csv(os.path.join(PATH, 'union.csv'))
 
 union['purchase_date'] = pd.to_datetime(union['purchase_date'])
 union['purchase_month'] = union['purchase_date'].dt.month
