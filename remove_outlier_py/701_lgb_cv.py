@@ -86,7 +86,7 @@ params = {
     'max_depth': -1,
     'learning_rate': 0.01,
     'boosting': 'gbdt',
-    'feature_fraction': 0.8,
+    'feature_fraction': 0.6,
     'bagging_freq': 1,
     'bagging_fraction': 0.8,
     'bagging_seed': 11,
@@ -118,19 +118,22 @@ params = {
 
 features = []
 
-features +=  [f'f10{i}.pkl' for i in (2, 3)]
+features +=  [f'f10{i}.pkl' for i in (2, )]
 features += [f'f11{i}_{j}.pkl' for i in (1, 2) 
                                for j in ('Y', 'N')]
-# features += [f'f12{i}.pkl' for i in (1, 2)]
-
+features += [f'f12{i}.pkl' for i in (1,)]
+features += [f'f13{i}.pkl' for i in (1, 2)]
 
 features += [f'f20{i}.pkl' for i in (2, 3)]
 features += [f'f21{i}_{j}.pkl' for i in (1, 2)
                                for j in ('Y', 'N')]
+features += [f'f23{i}.pkl' for i in (1, 2)]
 
-features += [f'f40{i}.pkl' for i in (2, 3)]
-features += [f'f41{i}_{j}.pkl' for i in (1, 2)
-                               for j in ('Y', 'N')]
+features += [f'f30{i}.pkl' for i in (2, )]
+
+# features += [f'f40{i}.pkl' for i in (2, 3)]
+# features += [f'f41{i}_{j}.pkl' for i in (1, 2)
+#                                for j in ('Y', 'N')]
 # features += [f'f42{i}.pkl' for i in (1, 2)]
 
 # features += [f'f50{i}.pkl' for i in (2, )]
@@ -144,11 +147,9 @@ train = pd.read_csv(os.path.join(PATH, 'train.csv'))
 test = pd.read_csv(os.path.join(PATH, 'test.csv'))
 
 for f in tqdm(features):
-    # print(f'Merge: {f}', end=' ')
     t = pd.read_pickle(os.path.join('..', 'remove_outlier_feature', f))
     train = pd.merge(train, t, on=KEY, how='left')
     test = pd.merge(test, t, on=KEY, how='left')
-    # print('Done!!')
 
 # =============================================================================
 # change date to int
@@ -157,26 +158,28 @@ cols = train.columns.values
 for f in [
     'new_purchase_date_max', 'new_purchase_date_min',
     'hist_purchase_date_max', 'hist_purchase_date_min', 
-    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
     'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
+    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
     'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min', 
     'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
-    'Y_new_auth_purchase_date_max_x', 'Y_new_auth_purchase_date_min_x', 
-    'N_new_auth_purchase_date_max_x', 'N_new_auth_purchase_date_min_x', 
-    'Y_new_auth_purchase_date_max_y', 'Y_new_auth_purchase_date_min_y', 
-    'N_new_auth_purchase_date_max_y', 'N_new_auth_purchase_date_min_y'
 ]:
     if f in cols:
         train[f] = train[f].astype(np.int64) * 1e-9
         test[f] = test[f].astype(np.int64) * 1e-9
 
+# train['outlier'] = 0
+# train.loc[train.target < -30, 'outlier'] = 1
+
 # =============================================================================
 # drop same values
 # =============================================================================
-ffm_cols = pd.read_csv('./ffm/ffm_cols.csv')
+# ffm_cols = pd.read_csv('./ffm/ffm_cols.csv')
 
-drop_cols = []
-drop_cols += list(ffm_cols['ffm_cols'].values)
+drop_cols = [
+    'hist_cumsum_count_purchase_amount13', 'Y_new_auth_purchase_date_max',
+    'Y_new_auth_purchase_date_min', 'N_new_auth_purchase_date_min'
+]
+# drop_cols += list(ffm_cols['ffm_cols'].values)
 
 for d in drop_cols:
     if f in cols:
@@ -201,8 +204,8 @@ for d in drop_cols:
 #     if test[col].isna().any():
 #         test[col] = test[col].fillna(0)
 
-train['nan_count'] = train.isnull().sum(axis=1)
-test['nan_count'] = test.isnull().sum(axis=1)
+# train['nan_count'] = train.isnull().sum(axis=1)
+# test['nan_count'] = test.isnull().sum(axis=1)
 
 y = train['target']
 

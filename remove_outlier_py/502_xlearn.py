@@ -27,11 +27,11 @@ PATH = os.path.join('..', 'remove_outlier_data')
 PREF = 'f502'
 
 param = {
-    'task': 'reg', 
+    'task': 'binary', 
     'opt': 'adagrad',
     'lr': 0.2, 
     'lambda': 0.002, 
-    'metric': 'rmse', 
+    'metric': 'auc', 
     'fold': 5,
     'epoch': 10,
 }
@@ -72,6 +72,7 @@ ffm_test = pd.read_csv(f'./ffm/{ftest}.txt', header=None)
 ffm_df = pd.concat([ffm_train, ffm_test])
 
 ffm_df['card_id'] = df['card_id']
+ffm_df = ffm_df.rename(columns={0: 'outlier'})
 
 ffm_df.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 

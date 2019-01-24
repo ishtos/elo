@@ -57,7 +57,7 @@ def aggregate(args):
     del agg_Y['Y_authorized_flag']
 
     agg_Y = agg_Y.groupby('card_id').agg(['mean', 'std'])
-    agg_Y.columns = ['hist_'+'_'.join(col).strip()
+    agg_Y.columns = ['new_'+'_'.join(col).strip()
                      for col in agg_Y.columns.values]
     agg_Y = agg_Y.reset_index()
     agg_Y = agg_Y.rename(columns={'hist_card_id': 'card_id'})
@@ -67,8 +67,7 @@ def aggregate(args):
     del agg_N['N_authorized_flag']
 
     agg_N = agg_N.groupby('card_id').agg(['mean', 'std'])
-    agg_N.columns = ['hist_'+'_'.join(col).strip()
-                     for col in agg_N.columns.values]
+    agg_N.columns = ['new_'+'_'.join(col).strip() for col in agg_N.columns.values]
     agg_N = agg_N.reset_index()
     agg_N = agg_N.rename(columns={'hist_card_id': 'card_id'})
 

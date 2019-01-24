@@ -23,14 +23,11 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f302'
+PREF = 'f303'
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'std']
-
-# os.system(f'rm ../feature/{PREF}_train.pkl')
-# os.system(f'rm ../feature/{PREF}_test.pkl')
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
@@ -38,7 +35,7 @@ stats = ['min', 'max', 'mean', 'std']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 merchants = pd.read_csv(os.path.join(PATH, 'merchants.csv'))
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'merchant_id', 'purchase_date', 'month_lag'])
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'merchant_id'])
 
 merchants = merchants.drop_duplicates(subset=['merchant_id'], keep='first').reset_index(drop=True) # TODO: change first
 historical_transactions = pd.merge(historical_transactions, merchants, on='merchant_id', how='left')
@@ -52,14 +49,12 @@ gc.collect()
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    agg = historical_transactions.groupby(key).agg(num_aggregations)
-    agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
-    agg.reset_index(inplace=True)
+    agg = historical_transactions.groupby(key).agg(num_aggregations).reset_index()
+    agg.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in agg.columns]
+    agg = agg.add_prefix(prefix)
+    agg = agg.rename(columns={prefix+KEY:KEY})
 
-    df = historical_transactions.groupby('card_id').size().reset_index(name='{}transactions_count'.format(prefix))
-
-    df = pd.merge(df, agg, on='card_id', how='left')
-    df.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
+    agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
 
@@ -69,17 +64,15 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {
-            'prefix': 'historica_merchants_',
+            'prefix': 'hist_merchants_',
             'key': ['card_id'],
             'num_aggregations': {
                 'merchant_group_id': ['nunique'],
-                'numerical_1': stats,
-                'numerical_2': stats,
-                'category_1': ['sum', 'median'],
-                'category_2': ['sum', 'median'],
-                'category_4': ['sum', 'median'],
-                'city_id': ['nunique'],
-                'state_id': ['nunique']
+                'numerical_1': ['sum'],
+                'numerical_2': ['sum'],
+                'category_1': ['sum'],
+                'category_2': ['mean'],
+                'category_4': ['sum'],
             }
         }
     ]

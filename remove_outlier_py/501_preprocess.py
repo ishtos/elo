@@ -60,7 +60,9 @@ for f in tqdm(features):
     train = pd.merge(train, t, on=KEY, how='left')
     test = pd.merge(test, t, on=KEY, how='left')
 
-test.insert(1, 'target', 0)
+test.insert(1, 'outlier', 0)
+train['outlier'] = 0
+train.loc[train.target < -30, 'outlier'] = 1
 
 #==============================================================================
 # date to int
@@ -119,14 +121,13 @@ for x in categories:
     catdict[x] = 1
 
 noofrows = train.shape[0]
-noofcolumns = len(features)
 with open("./ffm/alltrainffm.txt", "w") as text_file:
     for n, r in enumerate(range(noofrows)):
         if((n % 100000) == 0):
             print('Row', n)
         datastring = ""
         datarow = train.iloc[r].to_dict()
-        datastring += str(int(datarow['target']))
+        datastring += str(int(datarow['outlier']))
 
         for i, x in enumerate(catdict.keys()):
             if(catdict[x] == 0):
@@ -147,14 +148,13 @@ with open("./ffm/alltrainffm.txt", "w") as text_file:
         text_file.write(datastring)
 
 noofrows = test.shape[0]
-noofcolumns = len(features)
 with open("./ffm/alltestffm.txt", "w") as text_file:
     for n, r in enumerate(range(noofrows)):
         if((n % 100000) == 0):
             print('Row', n)
         datastring = ""
         datarow = test.iloc[r].to_dict()
-        datastring += str(int(datarow['target']))
+        datastring += str(int(datarow['outlier']))
 
         for i, x in enumerate(catdict.keys()):
             if(catdict[x] == 0):

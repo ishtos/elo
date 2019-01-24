@@ -17,14 +17,16 @@ from keras.regularizers import l2
 
 utils.start(__file__)
 #==============================================================================
-PREF = 'f501'
+PREF = 'f503'
 
 KEY = 'card_id'
+
+SEED = 18
+np.random.seed(SEED)
 
 # =============================================================================
 # def
 # =============================================================================
-
 def get_embed(x_input, x_size, k_latent):
     if x_size > 0:  
         embed = Embedding(x_size, k_latent, input_length=1,
@@ -63,19 +65,67 @@ def build_model_1(X, fsize):
     return model, model_features
 
 # =============================================================================
-# main
+# features
 # =============================================================================
+features = []
 
+features += [f'f10{i}.pkl' for i in (2, )]
+features += [f'f11{i}_{j}.pkl' for i in (1, 2)
+             for j in ('Y', 'N')]
+features += [f'f12{i}.pkl' for i in (1, 2)]
+features += [f'f13{i}.pkl' for i in (1, 2)]
 
-train = pd.read_csv('../data/train.csv', usecols=['card_id', 'feature_1', 'feature_2', 'feature_3'])
-test = pd.read_csv('../data/test.csv', usecols=['card_id', 'feature_1', 'feature_2', 'feature_3'])
+features += [f'f20{i}.pkl' for i in (2, 3)]
+features += [f'f21{i}_{j}.pkl' for i in (1, 2)
+             for j in ('Y', 'N')]
+features += [f'f23{i}.pkl' for i in (1, 2)]
 
+# features += [f'f40{i}.pkl' for i in (2, 3)]
+# features += [f'f41{i}_{j}.pkl' for i in (1, 2)
+#                                for j in ('Y', 'N')]
+# features += [f'f42{i}.pkl' for i in (1, 2)]
+
+# features += [f'f50{i}.pkl' for i in (2, )]
+
+# features = os.listdir('../remove_outlier_feature')
+
+# =============================================================================
+# read data and features
+# =============================================================================
+train = pd.read_csv(os.path.join(PATH, 'train.csv'))
+test = pd.read_csv(os.path.join(PATH, 'test.csv'))
+
+for f in tqdm(features):
+    t = pd.read_pickle(os.path.join('..', 'remove_outlier_feature', f))
+    train = pd.merge(train, t, on=KEY, how='left')
+    test = pd.merge(test, t, on=KEY, how='left')
+
+# =============================================================================
+# change date to int
+# =============================================================================
+cols = train.columns.values
+for f in [
+    'new_purchase_date_max', 'new_purchase_date_min',
+    'hist_purchase_date_max', 'hist_purchase_date_min',
+    'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min',
+    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
+    'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min',
+    'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
+]:
+    if f in cols:
+        train[f] = train[f].astype(np.int64) * 1e-9
+        test[f] = test[f].astype(np.int64) * 1e-9
+
+# =============================================================================
+# concat train and test
+# =============================================================================
 df = pd.concat([train, test], axis=0, sort=False)
 del train, test
 gc.collect()
 
-SEED = 18
-np.random.seed(SEED)
+# =============================================================================
+# main
+# =============================================================================
 
 features = ['feature_1', 'feature_2', 'feature_3']
 fsize = [int(df[f].max()) + 1 for f in features]
@@ -123,7 +173,7 @@ for f, X_p in zip(features, factors):
 for f, X_p in zip(features, biases):
     X['%s_fm_bias' % (f)] = X_p[:, 0]
 
-df = pd.merge(df, X, on=['feature_1', 'feature_2', 'feature_3'], how='left')
+df = pd.merge(df, X, on=features, how='left')
 df = df.drop(features, axis=1)
 df.to_pickle(f'../feature/{PREF}.pkl')
 

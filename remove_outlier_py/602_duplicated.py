@@ -34,56 +34,55 @@ KEY = 'card_id'
 # =============================================================================
 files = os.listdir(PATH)
 
-test = pd.read_csv(os.path.join('..', 'data', 'test.csv'))
+test = pd.read_csv(os.path.join('..', 'remove_outlier_data', 'test.csv'))
 
-features = ['f105.pkl', 'f109.pkl', 'f111.pkl']
-features += ['f107_N.pkl', 'f107_Y.pkl',
-             'f108_N.pkl', 'f108_Y.pkl',
-             'f110_N.pkl', 'f110_Y.pkl']
-features += ['f205.pkl', 'f209.pkl']
-features += ['f207_N.pkl', 'f207_Y.pkl',
-             'f208_N.pkl', 'f208_Y.pkl',
-             'f210_N.pkl', 'f210_Y.pkl']
-features += ['f302.pkl', 'f303.pkl', 'f304.pkl', 'f305.pkl', 'f306.pkl']
-features += ['f403.pkl', 'f404.pkl', 'f409.pkl', 'f411.pkl']
-features += ['f406_N.pkl', 'f406_Y.pkl',
-             'f407_N.pkl', 'f407_Y.pkl',
-             'f408_N.pkl', 'f408_Y.pkl']
-# features += ['f501.pkl']
+features = []
 
-for f in features:
-    print(f'Merge: {f}', end=' ')
-    test = pd.merge(test, pd.read_pickle(os.path.join('..', 'feature', f)), on=KEY, how='left')
-    print('Done!!')
+features += [f'f10{i}.pkl' for i in (2, )]
+features += [f'f11{i}_{j}.pkl' for i in (1, 2)
+                               for j in ('Y', 'N')]
+features += [f'f12{i}.pkl' for i in (1,)]
+features += [f'f13{i}.pkl' for i in (1, 2)]
 
-drop_col = [
-    'N_authorized_flag_x',
-    'Y_authorized_flag_x',
-    'N_authorized_flag_y',
-    'Y_authorized_flag_y',
-    'union_transactions_count_x',
-    'union_transactions_count_y',
-]
+features += [f'f20{i}.pkl' for i in (2, 3)]
+features += [f'f21{i}_{j}.pkl' for i in (1, 2)
+             for j in ('Y', 'N')]
+features += [f'f23{i}.pkl' for i in (1, 2)]
 
-test = test.drop(drop_col, axis=1)
+# features += [f'f40{i}.pkl' for i in (2, 3)]
+# features += [f'f41{i}_{j}.pkl' for i in (1, 2)
+#                                for j in ('Y', 'N')]
+# features += [f'f42{i}.pkl' for i in (1, 2)]
 
+# features += [f'f50{i}.pkl' for i in (2, )]
+
+for f in tqdm(features):
+    test = pd.merge(test, pd.read_pickle(os.path.join('..', 'remove_outlier_feature', f)), on=KEY, how='left')
+
+
+cols = test.columns.values
 for f in [
-    'hist_purchase_date_max', 'hist_purchase_date_min',
-    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
-    'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min',
     'new_purchase_date_max', 'new_purchase_date_min',
-    'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
+    'hist_purchase_date_max', 'hist_purchase_date_min',
+    'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min',
+    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
     'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min',
-    'union_purchase_date_max', 'union_purchase_date_min',
-    'N_union_auth_purchase_date_max', 'N_union_auth_purchase_date_min',
-    'Y_union_auth_purchase_date_max', 'Y_union_auth_purchase_date_min']:
-    test[f] = test[f].astype(np.int64) * 1e-9
+    'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
+]:
+    if f in cols:
+        test[f] = test[f].astype(np.int64) * 1e-9
 
 drop = []
 columns = test.columns[1:]
 for i in tqdm(range(0, len(columns))):
+    ti = test[columns[i]].values
+    ti_max = max(test[columns[i]].values)
+    ti_min = min(test[columns[i]].values)
     for j in range(i+1, len(columns)):
-        if sum(test[columns[i]] != test[columns[j]]) == 0:
+        tj = test[columns[j]]
+        if ti_max != max(tj) or ti_min != min(tj):
+            continue
+        if sum(ti != tj) == 0:
             drop.append(columns[j])
 
 print(drop)
