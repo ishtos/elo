@@ -11,6 +11,7 @@
 
 # python -u 102_aggregate.py
 # python -u 103_aggregate_per_month.py
+# python -u 104_rank_k.py
 
 # python -u 111_authorized_aggregate.py
 # python -u 112_authorized_aggregate_per_month.py
@@ -19,7 +20,7 @@
 # python -u 122_repurchase_rate.py
 
 # python -u 131_pivot_table_purchase_amount.py
-python -u 132_pivot_table_installments.py
+# python -u 132_pivot_table_installments.py
 
 # =============================================================================
 # 200 new_merchant
@@ -33,17 +34,16 @@ python -u 132_pivot_table_installments.py
 # python -u 212_authorized_aggregate_per_month.py
 
 # python -u 231_pivot_table_purchase_amount.py
-python -u 232_pivot_table_installments.py
+# python -u 232_pivot_table_installments.py
 
 # =============================================================================
 # 300 merchants
 # =============================================================================
 # python -u 301_init.py
-# python -u 302_historical_aggregate.py
-# python -u 303_new_aggregate.py
-# python -u 304_union_aggregate.py
+# python -u 302_merchants_score.py
+python -u 303_historical_aggregate.py
+python -u 304_new_aggregate.py
 # python -u 305_unique_aggregate.py
-# python -u 306_merchants_score.py
 
 # =============================================================================
 # 400 union
@@ -62,9 +62,9 @@ python -u 232_pivot_table_installments.py
 # =============================================================================
 # 600 CV
 # =============================================================================
-# python -u 601_preprocess.py
+python -u 601_preprocess.py
 
 # =============================================================================
 # 700 CV
 # =============================================================================
-# python -u 701_lgb_cv.py
+python -u 701_lgb_cv.py

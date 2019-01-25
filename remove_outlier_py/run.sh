@@ -39,11 +39,10 @@ python -u 232_pivot_table_installments.py
 # 300 merchants
 # =============================================================================
 # python -u 301_init.py
-# python -u 302_historical_aggregate.py
-# python -u 303_new_aggregate.py
-# python -u 304_union_aggregate.py
+# python -u 302_merchants_score.py
+python -u 303_historical_aggregate.py
+python -u 304_new_aggregate.py
 # python -u 305_unique_aggregate.py
-# python -u 306_merchants_score.py
 
 # =============================================================================
 # 400 union

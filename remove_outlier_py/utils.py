@@ -14,6 +14,7 @@ import sys
 import gc
 import numpy as np
 import pandas as pd
+import multiprocessing as mp
 
 from glob import glob
 from tqdm import tqdm
@@ -21,6 +22,12 @@ from time import time, sleep
 from datetime import datetime
 from multiprocessing import cpu_count, Pool
 from sklearn.model_selection import KFold
+from sklearn.externals import joblib
+from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
+from functools import reduce, partial
+from scipy.stats import skew, kurtosis, iqr
+
 
 # =============================================================================
 # global variables
@@ -157,9 +164,6 @@ def check_feature():
     else:
         print('All files exist :)')
 
-# =============================================================================
-# 
-# =============================================================================
 def get_dummies(df):
     """
     binary would be drop_first
@@ -172,59 +176,6 @@ def get_dummies(df):
     df = pd.get_dummies(df, columns=col_binary, drop_first=True)
     df.columns = [c.replace(' ', '-') for c in df.columns]
     return df
-
-
-# def reduce_mem_usage(df):
-#     col_int8 = []
-#     col_int16 = []
-#     col_int32 = []
-#     col_int64 = []
-#     col_float16 = []
-#     col_float32 = []
-#     col_float64 = []
-#     col_cat = []
-#     for c in tqdm(df.columns, mininterval=20):
-#         col_type = df[c].dtype
-
-#         if col_type != object:
-#             c_min = df[c].min()
-#             c_max = df[c].max()
-#             if str(col_type)[:3] == 'int':
-#                 if c_min > np.iinfo(np.int8).min and c_max < np.iinfo(np.int8).max:
-#                     col_int8.append(c)
-                    
-#                 elif c_min > np.iinfo(np.int16).min and c_max < np.iinfo(np.int16).max:
-#                     col_int16.append(c)
-#                 elif c_min > np.iinfo(np.int32).min and c_max < np.iinfo(np.int32).max:
-#                     col_int32.append(c)
-#                 elif c_min > np.iinfo(np.int64).min and c_max < np.iinfo(np.int64).max:
-#                     col_int64.append(c)
-#             else:
-#                 if c_min > np.finfo(np.float16).min and c_max < np.finfo(np.float16).max:
-#                     col_float16.append(c)
-#                 elif c_min > np.finfo(np.float32).min and c_max < np.finfo(np.float32).max:
-#                     col_float32.append(c)
-#                 else:
-#                     col_float64.append(c)
-#         else:
-#             col_cat.append(c)
-    
-#     if len(col_int8)>0:
-#         df[col_int8] = df[col_int8].astype(np.int8)
-#     if len(col_int16)>0:
-#         df[col_int16] = df[col_int16].astype(np.int16)
-#     if len(col_int32)>0:
-#         df[col_int32] = df[col_int32].astype(np.int32)
-#     if len(col_int64)>0:
-#         df[col_int64] = df[col_int64].astype(np.int64)
-#     if len(col_float16)>0:
-#         df[col_float16] = df[col_float16].astype(np.float16)
-#     if len(col_float32)>0:
-#         df[col_float32] = df[col_float32].astype(np.float32)
-#     if len(col_float64)>0:
-#         df[col_float64] = df[col_float64].astype(np.float64)
-#     if len(col_cat)>0:
-#         df[col_cat] = df[col_cat].astype('category')
 
 def reduce_mem_usage(df, verbose=True):
     numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
@@ -309,18 +260,8 @@ def __get_use_files__():
 
 def get_use_files(prefixes=[], is_train=True):
     unused_files = []
-   
-    # unused_files  = [f.split('/')[-1] for f in sorted(glob('../feature_unused/*.pkl'))]
-    # unused_files += [f.split('/')[-1] for f in sorted(glob('../feature_var0/*.pkl'))]
-    # unused_files += [f.split('/')[-1] for f in sorted(glob('../feature_corr1/*.pkl'))]
-   
+
     all_files = sorted(glob('../feature/*.pkl'))
-    # if is_train:
-    #     all_files = sorted(glob('../feature/train*.pkl'))
-    #     unused_files = ['../feature/train_'+f for f in unused_files]
-    # else:
-    #     all_files = sorted(glob('../feature/test*.pkl'))
-    #     unused_files = ['../feature/test_'+f for f in unused_files]
     
     if len(prefixes)>0:
         use_files = []
@@ -338,3 +279,71 @@ def get_use_files(prefixes=[], is_train=True):
     print(f'got {len(all_files)}')
     return all_files
 
+# =============================================================================
+# from home credit
+# =============================================================================
+def chunk_groups(groupby_object, chunk_size):
+    n_groups = groupby_object.ngroups
+    group_chunk, index_chunk = [], []
+    for i, (index, df) in enumerate(groupby_object):
+        group_chunk.append(df)
+        index_chunk.append(index)
+
+        if (i + 1) % chunk_size == 0 or i + 1 == n_groups:
+            group_chunk_, index_chunk_ = group_chunk.copy(), index_chunk.copy()
+            group_chunk, index_chunk = [], []
+            yield index_chunk_, group_chunk_
+
+def parallel_apply(groups, func, index_name='Index', num_workers=1, chunk_size=100000):
+    n_chunks = np.ceil(1.0 * groups.ngroups / chunk_size)
+    indeces, features = [], []
+    for index_chunk, groups_chunk in tqdm(chunk_groups(groups, chunk_size), total=n_chunks):
+        with mp.pool.Pool(num_workers) as executor:
+            features_chunk = executor.map(func, groups_chunk)
+        features.extend(features_chunk)
+        indeces.extend(index_chunk)
+
+    features = pd.DataFrame(features)
+    features.index = indeces
+    features.index.name = index_name
+    return features
+
+def add_features(feature_name, aggs, features, feature_names, groupby):
+    feature_names.extend(['{}_{}'.format(feature_name, agg) for agg in aggs])
+
+    for agg in aggs:
+        if agg == 'kurt':
+            agg_func = kurtosis
+        elif agg == 'iqr':
+            agg_func = iqr
+        else:
+            agg_func = agg
+        
+        g = groupby[feature_name].agg(agg_func).reset_index().rename(
+            index=str, columns={feature_name: '{}_{}'.format(feature_name, agg)})
+        features = features.merge(g, on='SK_ID_CURR', how='left')
+    return features, feature_names
+
+def add_features_in_group(features, gr_, feature_name, aggs, prefix):
+    for agg in aggs:
+        if agg == 'sum':
+            features['{}{}_sum'.format(prefix, feature_name)] = gr_[feature_name].sum()
+        elif agg == 'mean':
+            features['{}{}_mean'.format(prefix, feature_name)] = gr_[feature_name].mean()
+        elif agg == 'max':
+            features['{}{}_max'.format(prefix, feature_name)] = gr_[feature_name].max()
+        elif agg == 'min':
+            features['{}{}_min'.format(prefix, feature_name)] = gr_[feature_name].min()
+        elif agg == 'std':
+            features['{}{}_std'.format(prefix, feature_name)] = gr_[feature_name].std()
+        elif agg == 'count':
+            features['{}{}_count'.format(prefix, feature_name)] = gr_[feature_name].count()
+        elif agg == 'skew':
+            features['{}{}_skew'.format(prefix, feature_name)] = skew(gr_[feature_name])
+        elif agg == 'kurt':
+            features['{}{}_kurt'.format(prefix, feature_name)] = kurtosis(gr_[feature_name])
+        elif agg == 'iqr':
+            features['{}{}_iqr'.format(prefix, feature_name)] = iqr(gr_[feature_name])
+        elif agg == 'median':
+            features['{}{}_median'.format(prefix, feature_name)] = gr_[feature_name].median()
+    return features

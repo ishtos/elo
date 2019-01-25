@@ -44,7 +44,7 @@ historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transaction
 
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
 historical_transactions['purchase_month'] = historical_transactions['purchase_date'].dt.month
-historical_transactions['month_diff'] = (datetime.date(2018, 3, 1) - historical_transactions['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
+historical_transactions['month_diff'] = (datetime.date(2018, 2, 28) - historical_transactions['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
 historical_transactions['month_diff'] += historical_transactions['month_lag']
 historical_transactions['installments'] = historical_transactions['installments'].astype(int)
 # historical_transactions.loc[:, 'purchase_date'] = pd.DatetimeIndex(historical_transactions['purchase_date']).astype(np.int64) * 1e-9
@@ -66,7 +66,7 @@ def aggregate(args):
     df = pd.merge(df, agg, on='card_id', how='left')
     df['hist_auth_purchase_date_diff'] = (df['hist_auth_purchase_date_max'] - df['hist_auth_purchase_date_min']).dt.days
     df['hist_auth_purchase_date_average'] = df['hist_auth_purchase_date_diff'] / df['hist_auth_transactions_count']
-    df['hist_auth_purchase_date_uptonow'] = (datetime.date(2018, 2, 1) - df['hist_auth_purchase_date_max'].dt.date).dt.days
+    df['hist_auth_purchase_date_uptonow'] = (datetime.date(2018, 2, 28) - df['hist_auth_purchase_date_max'].dt.date).dt.days
     
     df_Y = df[df.authorized_flag == 1].add_prefix('Y_')
     df_Y = df_Y.rename(columns={'Y_card_id': 'card_id'})

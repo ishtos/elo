@@ -65,7 +65,7 @@ def aggregate(args):
     df = pd.merge(df, agg, on='card_id', how='left')
     df['new_purchase_date_diff'] = (df['new_purchase_date_max'] - df['new_purchase_date_min']).dt.days
     df['new_purchase_date_average'] = df['new_purchase_date_diff'] / df['new_transactions_count']
-    df['new_purchase_date_uptonow'] = (datetime.date(2018, 3, 1) - df['new_purchase_date_max'].dt.date).dt.days
+    df['new_purchase_date_uptonow'] = (datetime.date(2018, 2, 28) - df['new_purchase_date_max'].dt.date).dt.days
 
     df.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 

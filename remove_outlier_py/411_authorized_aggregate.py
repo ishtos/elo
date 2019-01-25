@@ -46,7 +46,7 @@ union = pd.read_csv(
 union['purchase_date'] = pd.to_datetime(
     union['purchase_date'])
 union['purchase_month'] = union['purchase_date'].dt.month
-union['month_diff'] = (datetime.date(2018, 3, 1) - union['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
+union['month_diff'] = (datetime.date(2018, 2, 28) - union['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
 union['month_diff'] += union['month_lag']
 union['installments'] = union['installments'].astype(
     int)

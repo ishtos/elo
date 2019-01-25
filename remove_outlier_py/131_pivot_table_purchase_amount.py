@@ -95,7 +95,6 @@ def aggregate(args):
 
     return
 
-
 # =============================================================================
 #
 # =============================================================================
@@ -105,7 +104,7 @@ if __name__ == '__main__':
             'prefix': 'hist_',
             'index': 'card_id',
             'columns': 'month_lag',
-            'values': ['purchase_amount', 'installments']
+            'values': ['purchase_amount']
         }
     ]
 
