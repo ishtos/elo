@@ -44,7 +44,7 @@ historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transaction
 
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
 historical_transactions['purchase_month'] = historical_transactions['purchase_date'].dt.month
-historical_transactions['month_diff'] = (datetime.date(2018, 2, 1) - historical_transactions['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
+historical_transactions['month_diff'] = (datetime.date(2018, 3, 1) - historical_transactions['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
 historical_transactions['month_diff'] += historical_transactions['month_lag']
 historical_transactions['installments'] = historical_transactions['installments'].astype(int)
 # historical_transactions.loc[:, 'purchase_date'] = pd.DatetimeIndex(historical_transactions['purchase_date']).astype(np.int64) * 1e-9

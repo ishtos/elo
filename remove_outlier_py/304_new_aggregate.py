@@ -23,14 +23,11 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f303'
+PREF = 'f304'
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
-
-# os.system(f'rm ../feature/{PREF}_train.pkl')
-# os.system(f'rm ../feature/{PREF}_test.pkl')
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
@@ -38,13 +35,10 @@ stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 merchants = pd.read_csv(os.path.join(PATH, 'merchants.csv'))
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=[
-                                      'card_id', 'merchant_id', 'purchase_date', 'month_lag'])
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'merchant_id'])
 
-merchants = merchants.drop_duplicates(
-    subset=['merchant_id'], keep='first').reset_index(drop=True)  # TODO: change first
-new_merchant_transactions = pd.merge(
-    new_merchant_transactions, merchants, on='merchant_id', how='left')
+merchants = merchants.drop_duplicates(subset=['merchant_id'], keep='first').reset_index(drop=True) # TODO: change first
+new_merchant_transactions = pd.merge(new_merchant_transactions, merchants, on='merchant_id', how='left')
 
 del merchants
 gc.collect()
@@ -52,23 +46,17 @@ gc.collect()
 # =============================================================================
 #
 # =============================================================================
-
-
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    agg = new_merchant_transactions.groupby(key).agg(num_aggregations)
-    agg.columns = [prefix + '_'.join(col).strip()
-                   for col in agg.columns.values]
-    agg.reset_index(inplace=True)
+    agg = new_merchant_transactions.groupby(key).agg(num_aggregations).reset_index()
+    agg.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in agg.columns]
+    agg = agg.add_prefix(prefix)
+    agg = agg.rename(columns={prefix+KEY:KEY})
 
-    df = new_merchant_transactions.groupby('card_id').size().reset_index(name='{}transactions_count'.format(prefix))
-
-    df = pd.merge(df, agg, on='card_id', how='left')
-    df.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
+    agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
-
 
 # =============================================================================
 #
@@ -76,17 +64,15 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {
-            'prefix': 'new_merchants_',
+            'prefix': 'hist_merchants_',
             'key': ['card_id'],
             'num_aggregations': {
                 'merchant_group_id': ['nunique'],
-                'numerical_1': stats,
-                'numerical_2': stats,
-                'category_1': ['sum', 'mean'],
-                'category_2': ['sum', 'mean'],
-                'category_4': ['sum', 'mean'],
-                'city_id': ['nunique'],
-                'state_id': ['nunique']
+                'numerical_1': ['sum'],
+                'numerical_2': ['sum'],
+                'category_1': ['sum'], # 0, 1
+                'category_2': ['mean'], # 1, 2, 3, 4, 5
+                'category_4': ['sum'], # 0, 1
             }
         }
     ]

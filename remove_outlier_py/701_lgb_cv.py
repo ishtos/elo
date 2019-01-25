@@ -125,11 +125,11 @@ features += [f'f12{i}.pkl' for i in (1,)]
 features += [f'f13{i}.pkl' for i in (1, 2)]
 
 features += [f'f20{i}.pkl' for i in (2, 3)]
-features += [f'f21{i}_{j}.pkl' for i in (1, 2)
-                               for j in ('Y', 'N')]
+# features += [f'f21{i}_{j}.pkl' for i in (1, 2)
+#                                for j in ('Y', 'N')] # No use
 features += [f'f23{i}.pkl' for i in (1, 2)]
 
-features += [f'f30{i}.pkl' for i in (2, )]
+features += [f'f30{i}.pkl' for i in (2, 3, 4, )]
 
 # features += [f'f40{i}.pkl' for i in (2, 3)]
 # features += [f'f41{i}_{j}.pkl' for i in (1, 2)
@@ -196,13 +196,8 @@ for d in drop_cols:
 # =============================================================================
 # preprocess
 # =============================================================================
-# for col in train.columns:
-#     if train[col].isna().any():
-#         train[col] = train[col].fillna(0)
-
-# for col in test.columns:
-#     if test[col].isna().any():
-#         test[col] = test[col].fillna(0)
+train = train.fillna(0)
+test = test.fillna(0)
 
 # train['nan_count'] = train.isnull().sum(axis=1)
 # test['nan_count'] = test.isnull().sum(axis=1)

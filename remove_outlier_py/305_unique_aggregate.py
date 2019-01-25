@@ -27,10 +27,7 @@ PREF = 'f305'
 
 KEY = 'card_id'
 
-stats = ['nunique', 'min', 'max', 'mean', 'median', 'std', 'var', 'skew']
-
-# os.system(f'rm ../feature/{PREF}_train.pkl')
-# os.system(f'rm ../feature/{PREF}_test.pkl')
+stats = ['nunique', 'sum', 'mean', 'std']
 
 # =============================================================================
 #
@@ -38,12 +35,10 @@ stats = ['nunique', 'min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 merchants = pd.read_csv(os.path.join(PATH, 'merchants.csv'))
-merchants = merchants[['merchant_id', 'most_recent_sales_range', 'most_recent_purchases_range',
-                       'avg_sales_lag3', 'avg_purchases_lag3', 'active_months_lag3',
-                       'avg_sales_lag6', 'avg_purchases_lag6', 'active_months_lag6',
-                       'avg_sales_lag12', 'avg_purchases_lag12', 'active_months_lag12']]
-union_base = pd.read_csv(os.path.join(PATH, 'union_base.csv'))
-union_base = pd.merge(union_base, merchants, on='merchant_id', how='left')
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'merchant_id'])
+
+merchants = merchants.drop_duplicates(subset=['merchant_id'], keep='first').reset_index(drop=True) # TODO: change first
+historical_transactions = pd.merge(historical_transactions, merchants, on='merchant_id', how='left')
 
 del merchants
 gc.collect()
@@ -54,16 +49,12 @@ gc.collect()
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    agg = union_base.groupby(key).agg(num_aggregations)
-    agg.columns = [prefix + '_'.join(col).strip()
-                   for col in agg.columns.values]
-    agg.reset_index(inplace=True)
+    agg = historical_transactions.groupby(key).agg(num_aggregations).reset_index()
+    agg.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in agg.columns]
+    agg = agg.add_prefix(prefix)
+    agg = agg.rename(columns={prefix+KEY:KEY})
 
-    df = union_base.groupby('card_id').size().reset_index(
-        name='{}transactions_count'.format(prefix))
-
-    df = pd.merge(df, agg, on='card_id', how='left')
-    df.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
+    agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
 

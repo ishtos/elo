@@ -70,9 +70,9 @@ if __name__ == '__main__':
                 'merchant_group_id': ['nunique'],
                 'numerical_1': ['sum'],
                 'numerical_2': ['sum'],
-                'category_1': ['sum'],
-                'category_2': ['mean'],
-                'category_4': ['sum'],
+                'category_1': ['sum'], # 0, 1
+                'category_2': ['mean'], # 1, 2, 3, 4, 5
+                'category_4': ['sum'], # 0, 1
             }
         }
     ]

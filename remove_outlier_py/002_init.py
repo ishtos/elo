@@ -37,8 +37,8 @@ test = pd.read_csv('../input/test.csv', parse_dates=['first_active_month'])
 # historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
 # group = historical_transactions.groupby('card_id')['purchase_date'].max().reset_index()
 
-train = pd.merge(train, group, on='card_id', how='left')
-test = pd.merge(test, group, on='card_id', how='left')
+# train = pd.merge(train, group, on='card_id', how='left')
+# test = pd.merge(test, group, on='card_id', how='left')
 
 #==============================================================================
 # outliers

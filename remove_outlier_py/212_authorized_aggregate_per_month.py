@@ -57,8 +57,7 @@ def aggregate(args):
     del agg_Y['Y_authorized_flag']
 
     agg_Y = agg_Y.groupby('card_id').agg(['mean', 'std'])
-    agg_Y.columns = ['new_'+'_'.join(col).strip()
-                     for col in agg_Y.columns.values]
+    agg_Y.columns = ['new_'+'_'.join(col).strip() for col in agg_Y.columns.values]
     agg_Y = agg_Y.reset_index()
     agg_Y = agg_Y.rename(columns={'hist_card_id': 'card_id'})
 
@@ -75,7 +74,6 @@ def aggregate(args):
     agg_N.to_pickle(f'../remove_outlier_feature/{PREF}_N.pkl')
 
     return
-
 
 # =============================================================================
 #
