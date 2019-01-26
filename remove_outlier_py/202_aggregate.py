@@ -47,6 +47,7 @@ new_merchant_transactions['purchase_month'] = new_merchant_transactions['purchas
 new_merchant_transactions['month_diff'] = (datetime.date(2018, 2, 1) - new_merchant_transactions['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
 new_merchant_transactions['month_diff'] += new_merchant_transactions['month_lag']
 new_merchant_transactions['installments'] = new_merchant_transactions['installments'].astype(int)
+new_merchant_transactions['installments_exception'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
 # new_merchant_transactions.loc[:, 'purchase_date'] = pd.DatetimeIndex(new_merchant_transactions['purchase_date']).astype(np.int64) * 1e-9
 
 # =============================================================================
@@ -91,6 +92,7 @@ if __name__ == '__main__':
                 'merchant_category_id': ['nunique'],
 
                 'installments': ['nunique', 'mean', 'std'],
+                'installments_exception': ['sum'],
 
                 'purchase_amount': ['sum', 'mean', 'max', 'min', 'std'],
                 'purchase_month': ['median', 'max', 'min', 'std'],

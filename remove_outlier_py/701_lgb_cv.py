@@ -213,11 +213,11 @@ test['feature_3'] = test['feature_3'].astype(int)
 
 categorical_features = ['feature_1', 'feature_2', 'feature_3']
 
-for col in categorical_features:
-    lbl = LabelEncoder()
-    lbl.fit(list(train[col].values.astype('str')) + list(test[col].values.astype('str')))
-    train[col] = lbl.transform(list(train[col].values.astype('str')))
-    test[col] = lbl.transform(list(test[col].values.astype('str')))
+# for col in categorical_features:
+#     lbl = LabelEncoder()
+#     lbl.fit(list(train[col].values.astype('str')) + list(test[col].values.astype('str')))
+#     train[col] = lbl.transform(list(train[col].values.astype('str')))
+#     test[col] = lbl.transform(list(test[col].values.astype('str')))
 
 gc.collect()
 
