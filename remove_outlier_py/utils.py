@@ -347,3 +347,15 @@ def add_features_in_group(features, gr_, feature_name, aggs, prefix):
         elif agg == 'median':
             features['{}{}_median'.format(prefix, feature_name)] = gr_[feature_name].median()
     return features
+
+
+def _get_feature_names(features, period):
+    return sorted([feat for feat in features.keys() if '_{}_'.format(period) in feat])
+
+
+def safe_div(a,b):
+    try:
+        return float(a)/float(b)
+    except:
+        return 0.0
+
