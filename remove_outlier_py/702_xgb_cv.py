@@ -42,74 +42,93 @@ NTHREAD = cpu_count()
 NFOLD = 4
 
 params = {
-    'eta': 0.005, 
-    'max_depth': 10, 
-    'subsample': 0.8, 
-    'colsample_bytree': 0.8, 
+    'eta': 0.01, 
+    'max_depth': 0, 
+    'subsample': 0.6, 
+    'colsample_bytree': 0.6, 
     'objective': 'reg:linear', 
     'eval_metric': 'rmse', 
     'silent': True
 }
 
 # =============================================================================
-# all data
+# features
+# =============================================================================
+
+features = []
+
+features += [f'f10{i}.pkl' for i in (2, 4,)]
+features += [f'f11{i}_{j}.pkl' for i in (1, 2) 
+                               for j in ('Y', 'N')]
+features += [f'f12{i}.pkl' for i in (1,)]
+features += [f'f13{i}.pkl' for i in (1, 2)]
+
+features += [f'f20{i}.pkl' for i in (2,)]
+features += [f'f23{i}.pkl' for i in (1, 2)]
+
+features += [f'f30{i}.pkl' for i in (2, 3, 4,)]
+
+# =============================================================================
+# read data and features
 # =============================================================================
 train = pd.read_csv(os.path.join(PATH, 'train.csv'))
 test = pd.read_csv(os.path.join(PATH, 'test.csv'))
 
-# features =  ['f102.pkl', 'f103.pkl', 'f105.pkl']
-# features += ['f106_N.pkl', 'f106_Y.pkl', 'f107_N.pkl', 'f107_Y.pkl']
-# features += ['f202.pkl', 'f203.pkl', 'f205.pkl']
-# features += ['f206_N.pkl', 'f206_Y.pkl', 'f207_N.pkl', 'f207_Y.pkl']
-# features += ['f302.pkl', 'f303.pkl', 'f304.pkl', 'f305.pkl', 'f306.pkl']
-# features += ['f402.pkl', 'f403.pkl', 'f404.pkl']
-# features += ['f405_N.pkl', 'f405_Y.pkl', 'f406_N.pkl', 'f406_Y.pkl']
-# features += ['f901.pkl']
+for f in tqdm(features):
+    t = pd.read_pickle(os.path.join('..', 'remove_outlier_feature', f))
+    train = pd.merge(train, t, on=KEY, how='left')
+    test = pd.merge(test, t, on=KEY, how='left')
 
-features = ['f103.pkl', 'f105.pkl', 'f109.pkl']
-features += ['f107_N.pkl', 'f107_Y.pkl', 'f108_N.pkl', 'f108_Y.pkl']
-features += ['f203.pkl', 'f205.pkl', 'f209.pkl']
-features += ['f207_N.pkl', 'f207_Y.pkl', 'f208_N.pkl', 'f208_Y.pkl']
-features += ['f302.pkl', 'f303.pkl', 'f304.pkl', 'f305.pkl', 'f306.pkl']
-features += ['f403.pkl', 'f404.pkl', 'f409.pkl', 'f411.pkl']
-features += ['f406_N.pkl', 'f406_Y.pkl', 'f408_N.pkl', 'f408_Y.pkl']
+# =============================================================================
+# change date to int
+# =============================================================================
+cols = train.columns.values
+for f in [
+    'new_purchase_date_max', 'new_purchase_date_min',
+    'hist_purchase_date_max', 'hist_purchase_date_min', 
+    'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
+    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
+    'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min', 
+    'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
+]:
+    if f in cols:
+        train[f] = train[f].astype(np.int64) * 1e-9
+        test[f] = test[f].astype(np.int64) * 1e-9
 
-for f in features:
-    print(f'Merge: {f}')
-    train = pd.merge(train, pd.read_pickle(
-        os.path.join('..', 'feature', f)), on=KEY, how='left')
-    test = pd.merge(test, pd.read_pickle(
-        os.path.join('..', 'feature', f)), on=KEY, how='left')
+# train['outlier'] = 0
+# train.loc[train.target < -30, 'outlier'] = 1
 
-for f in ['hist_purchase_date_max', 'hist_purchase_date_min',
-          'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
-          'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min',
-          'new_purchase_date_max', 'new_purchase_date_min',
-          'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
-          'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min',
-          'union_purchase_date_max', 'union_purchase_date_min',
-          'N_union_auth_purchase_date_max', 'N_union_auth_purchase_date_min',
-          'Y_union_auth_purchase_date_max', 'Y_union_auth_purchase_date_min']:
-    train[f] = train[f].astype(np.int64) * 1e-9
-    test[f] = test[f].astype(np.int64) * 1e-9
+# =============================================================================
+# drop same values
+# =============================================================================
+# ffm_cols = pd.read_csv('./ffm/ffm_cols.csv')
 
-train = train.drop(['N_authorized_flag_x', 'Y_authorized_flag_x',
-                    'N_authorized_flag_y', 'Y_authorized_flag_y',
-                    'union_transactions_count_x', 'union_transactions_count_y'], axis=1)
-test = test.drop(['N_authorized_flag_x', 'Y_authorized_flag_x',
-                  'N_authorized_flag_y', 'Y_authorized_flag_y',
-                  'union_transactions_count_x', 'union_transactions_count_y'], axis=1)
+drop_cols = [
+    'hist_cumsum_count_purchase_amount13', 'Y_new_auth_purchase_date_max',
+    'Y_new_auth_purchase_date_min', 'N_new_auth_purchase_date_min'
+]
+# drop_cols += list(ffm_cols['ffm_cols'].values)
 
-# for col in train.columns:
-#     if train[col].isna().any():
-#         train[col] = train[col].fillna(0)
+for d in drop_cols:
+    if f in cols:
+        train.drop(d, axis=1, inplace=True)
+        test.drop(d, axis=1, inplace=True)
 
-# for col in test.columns:
-#     if test[col].isna().any():
-#         test[col] = test[col].fillna(0)
+# drop_cols = pd.read_csv('duplicated_columns.csv')
 
+# for d in drop_cols['duplicated_columns'].values:
+#     if d in cols:
+#         train.drop(d, axis=1, inplace=True)
+#         test.drop(d, axis=1, inplace=True)
+
+# =============================================================================
+# preprocess
+# =============================================================================
 train['nan_count'] = train.isnull().sum(axis=1)
 test['nan_count'] = test.isnull().sum(axis=1)
+
+train = train.fillna(0)
+test = test.fillna(0)
 
 y = train['target']
 
@@ -124,23 +143,18 @@ test['feature_3'] = test['feature_3'].astype(int)
 
 categorical_features = ['feature_1', 'feature_2', 'feature_3']
 
-for col in categorical_features:
-    lbl = LabelEncoder()
-    lbl.fit(list(train[col].values.astype('str')) +
-            list(test[col].values.astype('str')))
-    train[col] = lbl.transform(list(train[col].values.astype('str')))
-    test[col] = lbl.transform(list(test[col].values.astype('str')))
-
-# for col in ['hist_purchase_amount_max', 'hist_purchase_date_max', 'new_purchase_amount_max', 'new_purchase_date_max']:
-#     train[col + '_to_mean'] = train[col] / train[col].mean()
-#     test[col + '_to_mean'] = test[col] / test[col].mean()
+# for col in categorical_features:
+#     lbl = LabelEncoder()
+#     lbl.fit(list(train[col].values.astype('str')) + list(test[col].values.astype('str')))
+#     train[col] = lbl.transform(list(train[col].values.astype('str')))
+#     test[col] = lbl.transform(list(test[col].values.astype('str')))
 
 gc.collect()
 
 # =============================================================================
 # feature selection
 # =============================================================================
-# feature = pd.read_csv('../py/20190109_1_IMP.csv')
+# feature = pd.read_csv('IMP_csv/20190115_IMP.csv')
 # g = feature.groupby(['feature'])['importance'].mean().reset_index()
 # g = g.sort_values('importance', ascending=False).reset_index(drop=True)
 # g = g[g.importance > 0]

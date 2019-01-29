@@ -102,13 +102,34 @@ if __name__ == '__main__':
                 'city_id': ['nunique'],
                 'merchant_category_id': ['nunique'],
 
-                'installments': ['nunique', 'mean', 'std'],
+                'installments': ['nunique', 'mean', 'std', 'sum'],
                 'installments_exception': ['sum'],
 
                 'purchase_amount': ['sum', 'mean', 'max', 'min', 'std'],
-                'purchase_month': ['median', 'max', 'min', 'std'],
+                'purchase_month': ['mean', 'std'],
                 'purchase_date': ['max', 'min'],
-                'month_diff': ['median', 'max', 'min', 'std'],
+                'month_diff': ['max', 'std', 'mean'],
+                # 'month_lag': ['max', 'std', 'mean'],
+
+                'weekend': ['mean'],
+                # 'weekday': ['mean', 'nunique'],
+
+                'price': ['sum', 'mean', 'max', 'min'],
+                'amount_month_ratio': ['mean', 'min', 'max'],
+                'duration': ['mean','min', 'max'],
+
+                'Christmas_Day_2017': ['mean'],
+                'Mothers_Day_2017': ['mean'],
+                'fathers_day_2017': ['mean'],
+                'Children_day_2017': ['mean'],
+                'Valentine_Day_2017': ['mean'],
+                'Black_Friday_2017': ['mean'],
+                'Mothers_Day_2018': ['mean'],
+
+                # 'category_2_mean': ['mean'],
+                # 'category_2_sum': ['mean'],
+                # 'category_3_mean': ['mean'],
+                # 'category_3_sum': ['mean'],
             }
         }
     ]

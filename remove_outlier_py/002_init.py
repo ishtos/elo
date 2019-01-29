@@ -46,22 +46,19 @@ test = pd.read_csv('../input/test.csv', parse_dates=['first_active_month'])
 train['outliers'] = 0
 train.loc[train['target'] < -30, 'outliers'] = 1
 
-feature_cols = ['feature_1', 'feature_2', 'feature_3']
-feature_label = train.groupby(feature_cols).agg({'outliers': ['mean']}).reset_index()
-feature_label.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in feature_label.columns]
-train = pd.merge(train, feature_label, on=feature_cols, how='left')
-test = pd.merge(test, feature_label, on=feature_cols, how='left')
-
-train = train.drop('outliers', axis=1)
+# feature_cols = ['feature_1', 'feature_2', 'feature_3']
+# feature_label = train.groupby(feature_cols).agg({'outliers': ['mean']}).reset_index()
+# feature_label.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in feature_label.columns]
+# train = pd.merge(train, feature_label, on=feature_cols, how='left')
+# test = pd.merge(test, feature_label, on=feature_cols, how='left')
 
 #==============================================================================
 # train
 #==============================================================================
-columns = ['year', 'weekday', 'month', 'weekofyear', 'quarter']
-for c in columns:
+for c in tqdm(('year', 'month', 'quarter')):
     nc = 'first_active_month' + '_' + c
-    train[nc] = getattr(train['first_active_month'].dt, c).astype(int)
-
+    train[nc] = getattr(train['first_active_month'].dt, c)
+    
 max_date = train['first_active_month'].dt.date.max()
 train['elapsed_time'] = (max_date - train['first_active_month'].dt.date).dt.days
 # train['elapsed_time'] = (train['purchase_date'].dt.date - train['first_active_month'].dt.date).dt.days
@@ -70,9 +67,31 @@ train['days_feature_1'] = train['feature_1'] * train['elapsed_time']
 train['days_feature_2'] = train['feature_2'] * train['elapsed_time']
 train['days_feature_3'] = train['feature_3'] * train['elapsed_time']
 
-train['feature_1'] = train['feature_1'].astype('category')
-train['feature_2'] = train['feature_2'].astype('category')
-train['feature_3'] = train['feature_3'].astype('category')
+train['days_feature1_ratio'] = train['feature_1'] / train['elapsed_time']
+train['days_feature2_ratio'] = train['feature_2'] / train['elapsed_time']
+train['days_feature3_ratio'] = train['feature_3'] / train['elapsed_time']
+
+# train, cols = utils.one_hot_encoder(train, nan_as_category=False)
+
+for f in tqdm(('feature_1','feature_2','feature_3')):
+    order_label = train.groupby(f)['outliers'].mean()
+    train[f] = train[f].map(order_label)
+    test[f] = test[f].map(order_label)
+
+train = train.drop('outliers', axis=1)
+
+features = ['feature_1', 'feature_2', 'feature_3']
+
+train['feature_sum'] = train['feature_1'] + train['feature_2'] + train['feature_3']
+train['feature_mean'] = train['feature_sum'] / 3
+
+t = train[features]
+for c in tqdm(('max', 'min', 'var')):
+    train[f'feature_{c}'] = t.apply(c, axis=1)
+
+# train['feature_1'] = train['feature_1'].astype('category')
+# train['feature_2'] = train['feature_2'].astype('category')
+# train['feature_3'] = train['feature_3'].astype('category')
 
 # del train['purchase_date'], train['first_active_month']
 
@@ -88,20 +107,33 @@ test.loc[
         (test['feature_2'] == 2) & 
         (test['feature_3'] == 1), 'first_active_month'].min()
 
-for c in columns:
+for c in tqdm(('year', 'month', 'quarter')):
     nc = 'first_active_month' + '_' + c
-    test[nc] = getattr(test['first_active_month'].dt, c).astype(int)
+    test[nc] = getattr(test['first_active_month'].dt, c)
 
 test['elapsed_time'] = (max_date - test['first_active_month'].dt.date).dt.days
 # test['elapsed_time'] = (test['purchase_date'].dt.date - test['first_active_month'].dt.date).dt.days
+
+# test, cols = utils.one_hot_encoder(test, nan_as_category=False)
 
 test['days_feature_1'] = test['feature_1'] * test['elapsed_time']
 test['days_feature_2'] = test['feature_2'] * test['elapsed_time']
 test['days_feature_3'] = test['feature_3'] * test['elapsed_time']
 
-test['feature_1'] = test['feature_1'].astype('category')
-test['feature_2'] = test['feature_2'].astype('category')
-test['feature_3'] = test['feature_3'].astype('category')
+test['days_feature1_ratio'] = test['feature_1'] / test['elapsed_time']
+test['days_feature2_ratio'] = test['feature_2'] / test['elapsed_time']
+test['days_feature3_ratio'] = test['feature_3'] / test['elapsed_time']
+
+test['feature_sum'] = test['feature_1'] + test['feature_2'] + test['feature_3']
+test['feature_mean'] = test['feature_sum'] / 3
+
+t = test[features]
+for c in tqdm(('max', 'min', 'var')):
+    test[f'feature_{c}'] = t.apply(c, axis=1)
+
+# test['feature_1'] = test['feature_1'].astype('category')
+# test['feature_2'] = test['feature_2'].astype('category')
+# test['feature_3'] = test['feature_3'].astype('category')
 
 # del test['purchase_date'], test['first_active_month']
 

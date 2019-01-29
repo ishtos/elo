@@ -97,6 +97,29 @@ params = {
     'random_state': SEED
 }
 
+params = {
+    # 'boosting': 'gbdt',
+    'boosting': 'goss',
+    'objective': 'regression',
+    'metric': 'rmse',
+    'learning_rate': 0.01,
+    'subsample': 0.9855232997390695,
+    'max_depth': 7,
+    'top_rate': 0.9064148448434349,
+    'num_leaves': 63,
+    'min_child_weight': 41.9612869171337,
+    'other_rate': 0.0721768246018207,
+    'reg_alpha': 9.677537745007898,
+    'colsample_bytree': 0.5665320670155495,
+    'min_split_gain': 9.820197773625843,
+    'reg_lambda': 8.2532317400459,
+    'min_data_in_leaf': 21,
+    'verbose': -1,
+    'seed': SEED,
+    'bagging_seed': SEED,
+    'drop_seed': SEED,
+}
+
 # =============================================================================
 # best feature
 # =============================================================================
@@ -118,16 +141,16 @@ params = {
 
 features = []
 
-features += [f'f10{i}.pkl' for i in (2, 4,)]
-features += [f'f11{i}_{j}.pkl' for i in (1, 2) 
-                               for j in ('Y', 'N')]
-features += [f'f12{i}.pkl' for i in (1,)]
-features += [f'f13{i}.pkl' for i in (1, 2)]
+features += [f'f10{i}.pkl' for i in (2,)]
+# features += [f'f11{i}_{j}.pkl' for i in (1, 2) 
+#                                for j in ('Y', 'N')]
+# features += [f'f12{i}.pkl' for i in (1, 2)]
+# features += [f'f13{i}.pkl' for i in (1, 2)]
 
 features += [f'f20{i}.pkl' for i in (2,)]
-features += [f'f23{i}.pkl' for i in (1, 2)]
+# features += [f'f23{i}.pkl' for i in (1, 2)]
 
-features += [f'f30{i}.pkl' for i in (2, 3, 4,)]
+features += [f'f30{i}.pkl' for i in (3, 4)]
 
 # features += [f'f40{i}.pkl' for i in (2, 3)]
 # features += [f'f41{i}_{j}.pkl' for i in (1, 2)
@@ -150,27 +173,10 @@ for f in tqdm(features):
     test = pd.merge(test, t, on=KEY, how='left')
 
 # =============================================================================
-# change date to int
-# =============================================================================
-cols = train.columns.values
-for f in [
-    'new_purchase_date_max', 'new_purchase_date_min',
-    'hist_purchase_date_max', 'hist_purchase_date_min', 
-    'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
-    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
-    'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min', 
-    'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
-]:
-    if f in cols:
-        train[f] = train[f].astype(np.int64) * 1e-9
-        test[f] = test[f].astype(np.int64) * 1e-9
-
-# train['outlier'] = 0
-# train.loc[train.target < -30, 'outlier'] = 1
-
-# =============================================================================
 # drop same values
 # =============================================================================
+cols = train.columns.values
+
 # ffm_cols = pd.read_csv('./ffm/ffm_cols.csv')
 
 drop_cols = [
@@ -192,6 +198,72 @@ for d in drop_cols:
 #         test.drop(d, axis=1, inplace=True)
 
 # =============================================================================
+# hand crafted 
+# =============================================================================
+date_features=['hist_purchase_date_max','hist_purchase_date_min', 'new_purchase_date_max', 'new_purchase_date_min']
+
+for df in tqdm((train, test)):
+    for f in date_features + ['first_active_month']:
+        df[f] = pd.to_datetime(df[f])
+
+    df['hist_first_buy'] = (df['hist_purchase_date_min'].dt.date - df['first_active_month'].dt.date).dt.days
+    df['hist_last_buy'] = (df['hist_purchase_date_max'].dt.date - df['first_active_month'].dt.date).dt.days
+    df['new_first_buy'] = (df['new_purchase_date_min'].dt.date - df['first_active_month'].dt.date).dt.days
+    df['new_last_buy'] = (df['new_purchase_date_max'].dt.date - df['first_active_month'].dt.date).dt.days
+
+    for f in date_features:
+        df[f] = df[f].astype(np.int64) * 1e-9
+
+    df['card_id_total'] = df['new_transactions_count'] + df['hist_transactions_count']
+    # df['card_id_cnt_total'] = df['new_card_id_count'] + df['hist_card_id_count']
+    # df['card_id_cnt_ratio'] = df['new_card_id_count'] / df['hist_card_id_count']
+    df['purchase_amount_total'] = df['new_purchase_amount_sum'] + df['hist_purchase_amount_sum']
+    df['purchase_amount_mean'] = df['new_purchase_amount_mean'] + df['hist_purchase_amount_mean']
+    df['purchase_amount_max'] = df['new_purchase_amount_max'] + df['hist_purchase_amount_max']
+    df['purchase_amount_min'] = df['new_purchase_amount_min'] + df['hist_purchase_amount_min']
+    df['purchase_amount_ratio'] = df['new_purchase_amount_sum'] / df['hist_purchase_amount_sum']
+    df['month_diff_mean'] = df['new_month_diff_mean'] + df['hist_month_diff_mean']
+    df['month_diff_ratio'] = df['new_month_diff_mean'] / df['hist_month_diff_mean']
+    # df['month_lag_mean'] = df['new_month_lag_mean'] + df['hist_month_lag_mean']
+    # df['month_lag_max'] = df['new_month_lag_max'] + df['hist_month_lag_max']
+    # df['month_lag_min'] = df['new_month_lag_min'] + df['hist_month_lag_min']
+    df['category_1_mean'] = df['new_category_1_mean'] + df['hist_category_1_mean']
+    df['installments_total'] = df['new_installments_sum'] + df['hist_installments_sum']
+    df['installments_mean'] = df['new_installments_mean'] + df['hist_installments_mean']
+    # df['installments_max'] = df['new_installments_max'] + df['hist_installments_max']
+    df['installments_ratio'] = df['new_installments_sum'] / df['hist_installments_sum']
+    df['price_total'] = df['purchase_amount_total'] / df['installments_total']
+    df['price_mean'] = df['purchase_amount_mean'] / df['installments_mean']
+    # df['price_max'] = df['purchase_amount_max'] / df['installments_max']
+    df['duration_mean'] = df['new_duration_mean'] + df['hist_duration_mean']
+    df['duration_min'] = df['new_duration_min'] + df['hist_duration_min']
+    df['duration_max'] = df['new_duration_max'] + df['hist_duration_max']
+    df['amount_month_ratio_mean']= df['new_amount_month_ratio_mean'] + df['hist_amount_month_ratio_mean']
+    df['amount_month_ratio_min']= df['new_amount_month_ratio_min'] + df['hist_amount_month_ratio_min']
+    df['amount_month_ratio_max']= df['new_amount_month_ratio_max'] + df['hist_amount_month_ratio_max']
+    df['new_CLV'] = df['new_transactions_count'] * df['new_purchase_amount_sum'] / df['new_month_diff_mean']
+    df['hist_CLV'] = df['hist_transactions_count'] * df['hist_purchase_amount_sum'] / df['hist_month_diff_mean']
+    df['CLV_ratio'] = df['new_CLV'] / df['hist_CLV']
+
+# =============================================================================
+# change date to int
+# =============================================================================
+for f in [
+    # 'new_purchase_date_max', 'new_purchase_date_min',
+    # 'hist_purchase_date_max', 'hist_purchase_date_min', 
+    'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
+    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
+    'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min', 
+    'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
+]:
+    if f in cols:
+        train[f] = train[f].astype(np.int64) * 1e-9
+        test[f] = test[f].astype(np.int64) * 1e-9
+
+# train['outlier'] = 0
+# train.loc[train.target < -30, 'outlier'] = 1
+
+# =============================================================================
 # preprocess
 # =============================================================================
 train['nan_count'] = train.isnull().sum(axis=1)
@@ -211,7 +283,7 @@ test = test[col_to_use]
 train['feature_3'] = train['feature_3'].astype(int)
 test['feature_3'] = test['feature_3'].astype(int)
 
-categorical_features = ['feature_1', 'feature_2', 'feature_3']
+# categorical_features = ['feature_1', 'feature_2', 'feature_3']
 
 # for col in categorical_features:
 #     lbl = LabelEncoder()
@@ -258,7 +330,7 @@ for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
         20000,          
         valid_sets=[dtrain, dvalid],
         verbose_eval=200,
-        early_stopping_rounds=20)
+        early_stopping_rounds=100)
     
     y_pred_valid = model.predict(X.iloc[valid_index], num_iteration=model.best_iteration)
     y_pred = model.predict(X_test, num_iteration=model.best_iteration)

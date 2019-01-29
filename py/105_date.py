@@ -98,11 +98,11 @@ if __name__ == '__main__':
             'key': ['card_id'],
             'num_aggregations': {
                 'year': ['nunique'],
-                'weekofyear': ['nunique'],
-                'month': ['nunique'],
-                'dayofweek': ['nunique'],
-                'weekend': ['nunique'],
-                'hour': ['nunique'],
+                # 'weekofyear': ['nunique'],
+                # 'month': ['nunique'],
+                # 'dayofweek': ['nunique'],
+                'weekend': ['mean'],
+                # 'hour': ['nunique'],
             }
         }
     ]

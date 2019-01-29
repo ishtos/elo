@@ -9,7 +9,7 @@
 # =============================================================================
 # python -u 101_init.py
 
-# python -u 102_aggregate.py
+python -u 102_aggregate.py
 # python -u 103_aggregate_per_month.py
 # python -u 104_rank_k.py
 
@@ -25,7 +25,7 @@
 # =============================================================================
 # 200 new_merchant
 # =============================================================================
-# python -u 201_init.py
+python -u 201_init.py
 
 # python -u 202_aggregate.py
 # python -u 203_aggregate_per_month.py
@@ -41,8 +41,8 @@
 # =============================================================================
 # python -u 301_init.py
 # python -u 302_merchants_score.py
-python -u 303_historical_aggregate.py
-python -u 304_new_aggregate.py
+# python -u 303_historical_aggregate.py
+# python -u 304_new_aggregate.py
 # python -u 305_unique_aggregate.py
 
 # =============================================================================

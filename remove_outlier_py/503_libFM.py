@@ -21,6 +21,8 @@ PREF = 'f503'
 
 KEY = 'card_id'
 
+PATH = os.path.join('..', 'remove_outlier_data')
+
 SEED = 18
 np.random.seed(SEED)
 
@@ -65,72 +67,19 @@ def build_model_1(X, fsize):
     return model, model_features
 
 # =============================================================================
-# features
-# =============================================================================
-features = []
-
-features += [f'f10{i}.pkl' for i in (2, )]
-features += [f'f11{i}_{j}.pkl' for i in (1, 2)
-             for j in ('Y', 'N')]
-features += [f'f12{i}.pkl' for i in (1, 2)]
-features += [f'f13{i}.pkl' for i in (1, 2)]
-
-features += [f'f20{i}.pkl' for i in (2, 3)]
-features += [f'f21{i}_{j}.pkl' for i in (1, 2)
-             for j in ('Y', 'N')]
-features += [f'f23{i}.pkl' for i in (1, 2)]
-
-# features += [f'f40{i}.pkl' for i in (2, 3)]
-# features += [f'f41{i}_{j}.pkl' for i in (1, 2)
-#                                for j in ('Y', 'N')]
-# features += [f'f42{i}.pkl' for i in (1, 2)]
-
-# features += [f'f50{i}.pkl' for i in (2, )]
-
-# features = os.listdir('../remove_outlier_feature')
-
-# =============================================================================
 # read data and features
 # =============================================================================
-train = pd.read_csv(os.path.join(PATH, 'train.csv'))
-test = pd.read_csv(os.path.join(PATH, 'test.csv'))
-
-for f in tqdm(features):
-    t = pd.read_pickle(os.path.join('..', 'remove_outlier_feature', f))
-    train = pd.merge(train, t, on=KEY, how='left')
-    test = pd.merge(test, t, on=KEY, how='left')
-
-# =============================================================================
-# change date to int
-# =============================================================================
-cols = train.columns.values
-for f in [
-    'new_purchase_date_max', 'new_purchase_date_min',
-    'hist_purchase_date_max', 'hist_purchase_date_min',
-    'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min',
-    'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
-    'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min',
-    'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
-]:
-    if f in cols:
-        train[f] = train[f].astype(np.int64) * 1e-9
-        test[f] = test[f].astype(np.int64) * 1e-9
-
-# =============================================================================
-# concat train and test
-# =============================================================================
-df = pd.concat([train, test], axis=0, sort=False)
-del train, test
-gc.collect()
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
+historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
 
 # =============================================================================
 # main
 # =============================================================================
 
-features = ['feature_1', 'feature_2', 'feature_3']
-fsize = [int(df[f].max()) + 1 for f in features]
+features = ['city_id', 'merchant_category_id', 'state_id', 'subsector_id']
+fsize = [int(historical_transactions[f].max()) + 1 for f in features]
 
-X = df.groupby(features)['card_id'].count()
+X = historical_transactions.groupby(features)['card_id'].count()
 
 X = X.unstack().fillna(0)
 X = X.stack().astype('float32')
@@ -173,9 +122,9 @@ for f, X_p in zip(features, factors):
 for f, X_p in zip(features, biases):
     X['%s_fm_bias' % (f)] = X_p[:, 0]
 
-df = pd.merge(df, X, on=features, how='left')
-df = df.drop(features, axis=1)
-df.to_pickle(f'../feature/{PREF}.pkl')
+historical_transactions = pd.merge(historical_transactions, X, on=features, how='left')
+historical_transactions = historical_transactions.drop(features, axis=1)
+historical_transactions.to_pickle(f'../feature/{PREF}.pkl')
 
 #==============================================================================
 utils.end(__file__)

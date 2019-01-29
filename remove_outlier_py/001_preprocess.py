@@ -33,7 +33,7 @@ for f in files:
     print(f)
     df = pd.read_csv(os.path.join(PATH, f))
     df = utils.reduce_mem_usage(df)
-    df.to_csv(f'../remove_outlier_data/{f}', index=False)
+    df.to_csv(os.path.join('..', 'input', f'{f}'), index=False)
 
 # =============================================================================
 utils.end(__file__)
