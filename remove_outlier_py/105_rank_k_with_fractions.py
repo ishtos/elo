@@ -54,13 +54,13 @@ def last_k_instalment_features_with_fractions(gr, periods, fraction_periods):
         features_temp = utils.add_features_in_group(
             features_temp,gr_period, 
             'installments', 
-            ['mean', 'std', 'kurt','iqr'],
+            ['mean', 'var', 'skew', 'kurt','iqr'], 
             'last_{}_'.format(period))
         
         features_temp = utils.add_features_in_group(
             features_temp,gr_period, 
             'purchase_amount', 
-            ['sum','mean', 'std', 'kurt','iqr'],
+            ['sum', 'max', 'mean', 'var', 'skew', 'kurt','iqr'],
             'last_{}_'.format(period))
     
     for short_period, long_period in fraction_periods:
@@ -83,7 +83,6 @@ PATH = os.path.join('..', 'remove_outlier_data')
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
 
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
-historical_transactions['installments'] = historical_transactions['installments'].astype(int)
 historical_transactions['days'] = (datetime.date(2018, 2, 28) - historical_transactions['purchase_date'].dt.date).dt.days 
 historical_transactions = historical_transactions.query('0 <= installments and installments <= 12')
 
@@ -96,7 +95,7 @@ groupby = historical_transactions.groupby('card_id')
 func = partial(
     last_k_instalment_features_with_fractions, 
     periods=[60, 180, 360, 540], 
-    fraction_periods=[(60,180),(60,360),(180,540),(360,540)])
+    fraction_periods=[(60, 180),(60, 360),(180, 540),(360, 540)])
 
 g = utils.parallel_apply(groupby, func, index_name='card_id',num_workers=4, chunk_size=10000).reset_index()
 g.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
