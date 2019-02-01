@@ -31,7 +31,7 @@ PREF = 'f302'
 
 KEY = 'card_id'
 
-stats = ['sum', 'mean']
+stats = ['sum', 'mean', 'max', 'min']
 
 PATH = os.path.join('..', 'remove_outlier_data')
 
@@ -61,7 +61,8 @@ for i in (3, 6, 12):
 num_aggregations = {
     # 'most_recent_sales_range': 'mean', 
     # 'most_recent_purchases_range': 'mean', 
-    'sum_numerical': stats,
+    'numerical_1': stats,
+    'numerical_2': stats,
     'rate_lag3': stats,
     'rate_lag6': stats,
     'rate_lag12': stats,
