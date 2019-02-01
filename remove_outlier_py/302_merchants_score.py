@@ -31,7 +31,7 @@ PREF = 'f302'
 
 KEY = 'card_id'
 
-stats = ['sum', 'mean', 'max', 'min']
+stats = ['sum', 'mean', 'max', 'min', 'var']
 
 PATH = os.path.join('..', 'remove_outlier_data')
 

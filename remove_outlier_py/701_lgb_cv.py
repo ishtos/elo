@@ -127,7 +127,7 @@ features += [f'f10{i}.pkl' for i in (2, 7, 8)]
 features += [f'f20{i}.pkl' for i in (2, 5, 6)]
 # features += [f'f23{i}.pkl' for i in (1, 2)]
 
-features += [f'f30{i}.pkl' for i in (2,)]
+# features += [f'f30{i}.pkl' for i in (2,)]
 
 # features += [f'f40{i}.pkl' for i in (2, 3)]
 # features += [f'f41{i}_{j}.pkl' for i in (1, 2)

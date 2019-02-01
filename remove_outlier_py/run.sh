@@ -2,19 +2,20 @@
 # 000 initializer
 # =============================================================================
 # python -u 001_preprocess.py
-python -u 002_init.py
+# python -u 002_init.py
 
 # =============================================================================
 # 100 historical
 # =============================================================================
-python -u 101_init.py
+# python -u 101_init.py
 
 python -u 102_aggregate.py
 # python -u 103_aggregate_special_days.py
 # python -u 104_rank_k.py
 # python -u 105_rank_k_with_fractions.py
 # python -u 106_date.py
-python -u 107_category.py
+# python -u 107_category.py
+# python -u 108_category2.py
 
 # python -u 111_authorized_aggregate.py
 # python -u 112_authorized_aggregate_per_month.py
@@ -28,12 +29,13 @@ python -u 107_category.py
 # =============================================================================
 # 200 new_merchant
 # =============================================================================
-python -u 201_init.py
+# python -u 201_init.py
 
 python -u 202_aggregate.py
 # python -u 203_aggregate_special_days.py
 # python -u 204_rank_k.py
-python -u 205_category.py
+# python -u 205_category.py
+# python -u 206_category2.py
 
 # python -u 211_authorized_aggregate.py
 # python -u 212_authorized_aggregate_per_month.py

@@ -31,6 +31,8 @@ files = os.listdir(PATH)
 
 for f in files:
     print(f)
+    if f.endswith('.xlsx'):
+        continue
     df = pd.read_csv(os.path.join(PATH, f))
     df = utils.reduce_mem_usage(df)
     df.to_csv(f'../remove_outlier_data/{f}', index=False)
