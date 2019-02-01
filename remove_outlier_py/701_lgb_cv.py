@@ -254,6 +254,7 @@ col_not_to_use = [
     'hist_purchase_date_max', 'hist_purchase_date_min', 'hist_card_id_size',
     'new_purchase_date_max', 'new_purchase_date_min', 'new_card_id_size'
 ]
+col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c)]
 col_to_use = [c for c in train.columns if c not in col_not_to_use]
 
 
