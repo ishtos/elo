@@ -10,6 +10,7 @@ import os
 import gc
 import sys
 import utils
+import datetime
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -17,7 +18,6 @@ import matplotlib.pyplot as plt
 
 from glob import glob
 from tqdm import tqdm
-from datetime import datetime, date
 from collections import defaultdict
 from multiprocessing import cpu_count, Pool
 
@@ -38,7 +38,7 @@ from logging import getLogger, FileHandler, Formatter, DEBUG
 logger = getLogger(__name__)
 logger.setLevel(DEBUG)
 
-file_handler = FileHandler('log_outlier_{}'.format(str(date.today()).replace('-', '')))
+file_handler = FileHandler('log_outlier_{}'.format(str(datetime.datetime.today().date()).replace('-', '')))
 formatter = Formatter('%(message)s')
 file_handler.setFormatter(formatter)
 file_handler.setLevel(DEBUG)
@@ -160,7 +160,12 @@ df['hist_last_buy'] = (df['hist_purchase_date_max'].dt.date - df['first_active_m
 df['new_first_buy'] = (df['new_purchase_date_min'].dt.date - df['first_active_month'].dt.date).dt.days
 df['new_last_buy'] = (df['new_purchase_date_max'].dt.date - df['first_active_month'].dt.date).dt.days
 
-date_features=[
+# df['hist_first_buy'] = (datetime.date(2018, 4, 30) - df['hist_purchase_date_min'].dt.date).dt.days
+# df['hist_last_buy'] = (datetime.date(2018, 4, 30) - df['hist_purchase_date_max'].dt.date).dt.days
+# df['new_first_buy'] = (datetime.date(2018, 4, 30) - df['new_purchase_date_min'].dt.date).dt.days
+# df['new_last_buy'] = (datetime.date(2018, 4, 30) - df['new_purchase_date_max'].dt.date).dt.days
+
+date_features = [
     'hist_purchase_date_max','hist_purchase_date_min',
     'new_purchase_date_max', 'new_purchase_date_min'
 ]
@@ -199,25 +204,9 @@ df['new_CLV'] = df['new_card_id_count'] * df['new_purchase_amount_sum'] / df['ne
 df['hist_CLV'] = df['hist_card_id_count'] * df['hist_purchase_amount_sum'] / df['hist_month_diff_mean']
 df['CLV_ratio'] = df['new_CLV'] / df['hist_CLV']
 
-# hist_category = [
-#     'hist_category_2_1_sum', 'hist_category_2_2_sum',
-#     'hist_category_2_3_sum', 'hist_category_2_4_sum',
-#     'hist_category_2_5_sum', 'hist_category_3_0_sum',
-#     'hist_category_3_1_sum', 'hist_category_3_2_sum'
-# ]
-
-# new_category = [
-#     'new_category_2_1_sum', 'new_category_2_2_sum',
-#     'new_category_2_3_sum', 'new_category_2_4_sum', 
-#     'new_category_2_5_sum', 'new_category_3_0_sum', 
-#     'new_category_3_1_sum', 'new_category_3_2_sum'
-# ]
-
-# for i, j in zip(hist_category, new_category):
-#     df[i[5:]] = df[i] / df[j]
-
 train = df[df['target'].notnull()]
 test = df[df['target'].isnull()]
+
 del df
 gc.collect()
 
@@ -254,6 +243,7 @@ col_not_to_use = [
     'hist_purchase_date_max', 'hist_purchase_date_min', 'hist_card_id_size',
     'new_purchase_date_max', 'new_purchase_date_min', 'new_card_id_size'
 ]
+col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c)]
 col_to_use = [c for c in train.columns if c not in col_not_to_use]
 
 
@@ -262,7 +252,14 @@ gc.collect()
 X = train[col_to_use]
 X_test = test[col_to_use]
 
-# ========= ====================================================================
+categorical_features = [
+    'feature_1', 'feature_2', 'feature_3',
+]
+
+# X = pd.get_dummies(X, columns=categorical_features, drop_first=True, dummy_na=True)
+# X_test = pd.get_dummies(X_test, columns=categorical_features, drop_first=True, dummy_na=True)
+
+# =============================================================================
 # cv
 # =============================================================================
 folds = KFold(n_splits=NFOLD, shuffle=True, random_state=SEED)
@@ -323,8 +320,8 @@ for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
     fold_importance['fold'] = fold_n + 1
     feature_importance = pd.concat([feature_importance, fold_importance], axis=0)
 
-np.save(os.path.join('stacking', '{}_oof_lgb'.format(str(date.today()).replace('-', ''))), oof)
-np.save(os.path.join('stacking', '{}_prediction_lgb'.format(str(date.today()).replace('-', ''))), prediction)
+np.save(os.path.join('stacking', '{}_oof_lgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), oof)
+np.save(os.path.join('stacking', '{}_prediction_lgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), prediction)
 
 print('shape:', X.shape)
 print('CV {0:} mean score: {1:.4f}, std: {2:.4f}, max: {3:.4f}, min: {4:.4f}.'.format(NFOLD, np.mean(scores), np.std(scores), np.max(scores), np.min(scores)))
@@ -346,20 +343,20 @@ logger.info('''
 
 submission = pd.read_csv(os.path.join('..', 'input', 'sample_submission.csv'))
 submission['target'] = prediction
-submission.to_csv(os.path.join('..', 'submission', 'lightgbm_outlier_{}.csv'.format(str(date.today()).replace('-', ''))), index=False)
+submission.to_csv(os.path.join('..', 'submission', 'lightgbm_outlier_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
 
 feature_importance['importance'] /= NFOLD
 cols = feature_importance[['feature', 'importance']].groupby('feature').mean().sort_values(by='importance', ascending=False)[:50].index
 
 best_features = feature_importance.loc[feature_importance.feature.isin(cols)]
 best_features = best_features.sort_values(by='importance', ascending=False)
-feature_importance.sort_values(by='importance', ascending=False).to_csv('./IMP_csv/{}_IMP.csv'.format(str(date.today()).replace('-', '')), index=False)
+feature_importance.sort_values(by='importance', ascending=False).to_csv('./IMP_csv/{}_IMP.csv'.format(str(datetime.datetime.today().date()).replace('-', '')), index=False)
 
 plt.figure(figsize=(14, 25))
 plt.title('LGB Features (avg over folds)')
 plot = sns.barplot(x='importance', y='feature', data=best_features)
 fig = plot.get_figure()
-fig.savefig('./IMP_png/{}_IMP.png'.format(str(date.today()).replace('-', '')), bbox_inches='tight')
+fig.savefig('./IMP_png/{}_IMP.png'.format(str(datetime.datetime.today().date()).replace('-', '')), bbox_inches='tight')
 
 #==============================================================================
 utils.end(__file__)

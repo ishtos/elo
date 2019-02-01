@@ -37,6 +37,8 @@ stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
+historical_transactions['installments'].replace(-1, np.nan, inplace=True)
+historical_transactions['installments'].replace(999, np.nan, inplace=True)
 historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
 
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
@@ -48,7 +50,7 @@ historical_transactions['weekofyear'] = historical_transactions['purchase_date']
 historical_transactions['weekday'] = historical_transactions['purchase_date'].dt.weekday
 historical_transactions['weekend'] = (historical_transactions['purchase_date'].dt.weekday >= 5).astype(int)
 
-historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1e-9)
+historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1)
 
 historical_transactions['month_diff'] = ((datetime.date(2018, 4, 30) - historical_transactions['purchase_date'].dt.date).dt.days) // 30
 historical_transactions['month_diff'] += historical_transactions['month_lag']

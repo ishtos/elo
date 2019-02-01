@@ -24,13 +24,13 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f206'
+PREF = 'f207'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum', 'max', 'min', 'mean', 'var', 'skew']
+stats = ['min', 'max', 'mean', 'std']
 
 # os.system(f'rm ../feature/{PREF}_train.pkl')
 # os.system(f'rm ../feature/{PREF}_test.pkl')
@@ -40,16 +40,14 @@ stats = ['sum', 'max', 'min', 'mean', 'var', 'skew']
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
-new_merchant_transactions['purchase_amount'] = np.log1p(new_merchant_transactions['purchase_amount'] - new_merchant_transactions['purchase_amount'].min())
-
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'installments'])
 new_merchant_transactions = utils.reduce_mem_usage(new_merchant_transactions)
 
-for col in ['category_2', 'subsector_id', 'merchant_id', 'merchant_category_id']:
-    new_merchant_transactions[col + '_mean'] = new_merchant_transactions.groupby([col])['purchase_amount'].transform('mean')
-    # new_merchant_transactions[col + '_min'] = new_merchant_transactions.groupby([col])['purchase_amount'].transform('min')
-    # new_merchant_transactions[col + '_max'] = new_merchant_transactions.groupby([col])['purchase_amount'].transform('max')
-    # new_merchant_transactions[col + '_sum'] = new_merchant_transactions.groupby([col])['purchase_amount'].transform('sum')
+
+new_merchant_transactions['-1_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
+new_merchant_transactions['999_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
+new_merchant_transactions['exception_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
+
 
 # =============================================================================
 #
@@ -74,30 +72,9 @@ if __name__ == '__main__':
             'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                'category_2_mean': stats,
-                # 'category_2_min': ['min'],
-                # 'category_2_max': ['max'],
-                # 'category_2_sum': ['sum'],
-
-                # 'category_3_mean': ['mean'],
-                # 'category_3_min': ['min'],
-                # 'category_3_max': ['max'],
-                # 'category_3_sum': ['sum'],
-
-                'subsector_id_mean': stats,
-                # 'subsector_id_min': ['min'],
-                # 'subsector_id_max': ['max'],
-                # 'subsector_id_sum': ['sum'],
-
-                'merchant_id_mean': stats,
-                # 'merchant_id_min': ['min'],
-                # 'merchant_id_max': ['max'],
-                # 'merchant_id_sum': ['sum'],
-
-                'merchant_category_id_mean': stats,
-                # 'merchant_category_id_min': ['min'],
-                # 'merchant_category_id_max': ['max'],
-                # 'merchant_category_id_sum': ['sum'],
+                # '-1_installments': ['sum'],
+                # '999_installments': ['sum'], 
+                'exception_installments': ['sum'],
             }
         }
     ]

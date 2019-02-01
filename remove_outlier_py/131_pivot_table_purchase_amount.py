@@ -38,6 +38,7 @@ stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
+historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
 
 # =============================================================================
 #
