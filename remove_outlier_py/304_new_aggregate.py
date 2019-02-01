@@ -67,15 +67,15 @@ if __name__ == '__main__':
             'prefix': 'new_merchants_',
             'key': ['card_id'],
             'num_aggregations': {
-                'merchant_group_id': ['nunique'],
-                'merchant_category_id': ['nunique'],
+                # 'merchant_group_id': ['nunique'],
+                # 'merchant_category_id': ['nunique'],
                 # 'subsector_id': ['nunique'],
                 # 'state_id': ['nunique'],
                 'numerical_1': ['sum', 'mean'],
                 'numerical_2': ['sum', 'mean'],
-                'category_1': ['sum'], # 0, 1
-                'category_2': ['mean'], # 1, 2, 3, 4, 5
-                'category_4': ['sum'], # 0, 1
+                'category_1': ['sum', 'mean'], # 0, 1
+                # 'category_2': ['mean'], # 1, 2, 3, 4, 5
+                'category_4': ['sum', 'mean'], # 0, 1
             }
         }
     ]

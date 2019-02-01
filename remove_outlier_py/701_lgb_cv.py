@@ -118,16 +118,16 @@ params = {
 
 features = []
 
-features += [f'f10{i}.pkl' for i in (2, 7)]
+features += [f'f10{i}.pkl' for i in (2, 7, 8)]
 # features += [f'f11{i}_{j}.pkl' for i in (1, 2) 
 #                                for j in ('Y', 'N')]
 # features += [f'f12{i}.pkl' for i in (1,)]
-# features += [f'f13{i}.pkl' for i in (1, 2)]
+# features += [f'f13{i}.pkl' for i in (1,)]
 
-features += [f'f20{i}.pkl' for i in (2, 5)]
+features += [f'f20{i}.pkl' for i in (2, 5, 6)]
 # features += [f'f23{i}.pkl' for i in (1, 2)]
 
-# features += [f'f30{i}.pkl' for i in (2, 3, 4,)]
+features += [f'f30{i}.pkl' for i in (2, 3, 4,)]
 
 # features += [f'f40{i}.pkl' for i in (2, 3)]
 # features += [f'f41{i}_{j}.pkl' for i in (1, 2)
@@ -307,7 +307,7 @@ for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
         20000,          
         valid_sets=[dtrain, dvalid],
         verbose_eval=200,
-        early_stopping_rounds=20)
+        early_stopping_rounds=200)
     
     y_pred_valid = model.predict(X.iloc[valid_index], num_iteration=model.best_iteration)
     y_pred = model.predict(X_test, num_iteration=model.best_iteration)

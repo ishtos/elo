@@ -70,14 +70,14 @@ if __name__ == '__main__':
             'key': 'card_id',
             'num_aggregations': {
                 'category_2_mean': ['mean'],
-                'category_2_min': ['mean'],
-                'category_2_max': ['mean'],
-                'category_2_sum': ['mean'],
+                # 'category_2_min': ['min'],
+                # 'category_2_max': ['max'],
+                # 'category_2_sum': ['sum'],
 
                 'category_3_mean': ['mean'],
-                'category_3_min': ['mean'],
-                'category_3_max': ['mean'],
-                'category_3_sum': ['mean'],
+                # 'category_3_min': ['min'],
+                # 'category_3_max': ['max'],
+                # 'category_3_sum': ['sum'],
             }
         }
     ]
