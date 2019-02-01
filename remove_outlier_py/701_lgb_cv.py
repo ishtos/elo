@@ -199,43 +199,10 @@ df['new_CLV'] = df['new_card_id_count'] * df['new_purchase_amount_sum'] / df['ne
 df['hist_CLV'] = df['hist_card_id_count'] * df['hist_purchase_amount_sum'] / df['hist_month_diff_mean']
 df['CLV_ratio'] = df['new_CLV'] / df['hist_CLV']
 
-# hist_category = [
-#     'hist_category_2_1_sum', 'hist_category_2_2_sum',
-#     'hist_category_2_3_sum', 'hist_category_2_4_sum',
-#     'hist_category_2_5_sum', 'hist_category_3_0_sum',
-#     'hist_category_3_1_sum', 'hist_category_3_2_sum'
-# ]
-
-# new_category = [
-#     'new_category_2_1_sum', 'new_category_2_2_sum',
-#     'new_category_2_3_sum', 'new_category_2_4_sum', 
-#     'new_category_2_5_sum', 'new_category_3_0_sum', 
-#     'new_category_3_1_sum', 'new_category_3_2_sum'
-# ]
-
-# for i, j in zip(hist_category, new_category):
-#     df[i[5:]] = df[i] / df[j]
-
 train = df[df['target'].notnull()]
 test = df[df['target'].isnull()]
 del df
 gc.collect()
-
-# =============================================================================
-# change date to int
-# =============================================================================
-# cols = train.columns.values
-# for f in [
-#     'new_purchase_date_max', 'new_purchase_date_min',
-#     'hist_purchase_date_max', 'hist_purchase_date_min', 
-#     'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
-#     'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
-#     'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min', 
-#     'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
-# ]:
-#     if f in cols:
-#         train[f] = train[f].astype(np.int64) * 1e-9
-#         test[f] = test[f].astype(np.int64) * 1e-9
 
 # =============================================================================
 # drop same values
