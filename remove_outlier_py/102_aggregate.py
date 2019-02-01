@@ -46,7 +46,7 @@ historical_transactions['day'] = historical_transactions['purchase_date'].dt.day
 historical_transactions['hour'] = historical_transactions['purchase_date'].dt.hour
 historical_transactions['weekofyear'] = historical_transactions['purchase_date'].dt.weekofyear
 historical_transactions['weekday'] = historical_transactions['purchase_date'].dt.weekday
-historical_transactions['weekend'] = (historical_transactions['purchase_date'].dt.weekday >=5).astype(int)
+historical_transactions['weekend'] = (historical_transactions['purchase_date'].dt.weekday >= 5).astype(int)
 
 historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1e-9)
 
@@ -106,7 +106,7 @@ if __name__ == '__main__':
                 'purchase_date': ['max', 'min'],
                 'month_lag': ['max', 'min', 'mean', 'var', 'skew'], # 'max', 'min', 
                 'month_diff': ['max', 'min', 'mean', 'var', 'skew'], # 'max', 'min'
-                'authorized_flag': ['mean'],
+                'authorized_flag': ['sum', 'mean'],
                 'category_1': ['mean'],
                 'category_2': ['nunique'], # 'mean'
                 'category_3': ['nunique'], # 'mean'

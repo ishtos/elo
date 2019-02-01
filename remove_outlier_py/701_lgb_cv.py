@@ -127,7 +127,7 @@ features += [f'f10{i}.pkl' for i in (2, 7, 8)]
 features += [f'f20{i}.pkl' for i in (2, 5, 6)]
 # features += [f'f23{i}.pkl' for i in (1, 2)]
 
-features += [f'f30{i}.pkl' for i in (2, 3, 4,)]
+features += [f'f30{i}.pkl' for i in (2,)]
 
 # features += [f'f40{i}.pkl' for i in (2, 3)]
 # features += [f'f41{i}_{j}.pkl' for i in (1, 2)
@@ -254,6 +254,7 @@ col_not_to_use = [
     'hist_purchase_date_max', 'hist_purchase_date_min', 'hist_card_id_size',
     'new_purchase_date_max', 'new_purchase_date_min', 'new_card_id_size'
 ]
+col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c)]
 col_to_use = [c for c in train.columns if c not in col_not_to_use]
 
 

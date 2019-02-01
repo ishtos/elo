@@ -50,7 +50,7 @@ new_merchant_transactions['day'] = new_merchant_transactions['purchase_date'].dt
 new_merchant_transactions['hour'] = new_merchant_transactions['purchase_date'].dt.hour
 new_merchant_transactions['weekofyear'] = new_merchant_transactions['purchase_date'].dt.weekofyear
 new_merchant_transactions['weekday'] = new_merchant_transactions['purchase_date'].dt.weekday
-new_merchant_transactions['weekend'] = (new_merchant_transactions['purchase_date'].dt.weekday >=5).astype(int)
+new_merchant_transactions['weekend'] = (new_merchant_transactions['purchase_date'].dt.weekday >= 5).astype(int)
 
 new_merchant_transactions['price'] = new_merchant_transactions['purchase_amount'] / (new_merchant_transactions['installments'] + 1e-9)
 
