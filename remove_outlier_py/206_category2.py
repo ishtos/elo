@@ -80,22 +80,22 @@ if __name__ == '__main__':
                 # 'category_2_max': ['max'],
                 # 'category_2_sum': ['sum'],
 
-                # 'category_3_mean': stats,
+                'category_3_mean': stats,
                 # 'category_3_min': ['min'],
                 # 'category_3_max': ['max'],
                 # 'category_3_sum': ['sum'],
 
-                # 'subsector_id_mean': stats,
+                'subsector_id_mean': stats,
                 # 'subsector_id_min': stats,
                 # 'subsector_id_max': stats,
                 # 'subsector_id_sum': stats,
 
-                # 'merchant_id_mean': stats,
+                'merchant_id_mean': stats,
                 # 'merchant_id_min': stats,
                 # 'merchant_id_max': stats,
                 # 'merchant_id_sum': stats, 
 
-                # 'merchant_category_id_mean': stats,
+                'merchant_category_id_mean': stats,
                 # 'merchant_category_id_min': stats,
                 # 'merchant_category_id_max': stats,
                 # 'merchant_category_id_sum': stats,

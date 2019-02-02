@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-# from datetime import datetime, date
 import datetime
 from sklearn.preprocessing import LabelEncoder
 from multiprocessing import cpu_count, Pool
@@ -44,7 +43,7 @@ new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transac
 new_merchant_transactions['purchase_amount'] = np.log1p(new_merchant_transactions['purchase_amount'] - new_merchant_transactions['purchase_amount'].min())
 
 new_merchant_transactions['purchase_date'] = pd.to_datetime(new_merchant_transactions['purchase_date'])
-new_merchant_transactions['year'] = new_merchant_transactions['purchase_date'].dt.year
+# new_merchant_transactions['year'] = new_merchant_transactions['purchase_date'].dt.year
 new_merchant_transactions['month'] = new_merchant_transactions['purchase_date'].dt.month
 new_merchant_transactions['day'] = new_merchant_transactions['purchase_date'].dt.day
 new_merchant_transactions['hour'] = new_merchant_transactions['purchase_date'].dt.hour
@@ -52,7 +51,7 @@ new_merchant_transactions['weekofyear'] = new_merchant_transactions['purchase_da
 new_merchant_transactions['weekday'] = new_merchant_transactions['purchase_date'].dt.weekday
 new_merchant_transactions['weekend'] = (new_merchant_transactions['purchase_date'].dt.weekday >= 5).astype(int)
 
-new_merchant_transactions['price'] = new_merchant_transactions['purchase_amount'] / (new_merchant_transactions['installments'] + 1e-9)
+new_merchant_transactions['price'] = new_merchant_transactions['purchase_amount'] / (new_merchant_transactions['installments'] + 1)
 
 new_merchant_transactions['month_diff'] = ((datetime.date(2018, 4, 30) - new_merchant_transactions['purchase_date'].dt.date).dt.days) // 30
 new_merchant_transactions['month_diff'] += new_merchant_transactions['month_lag']
@@ -98,7 +97,7 @@ if __name__ == '__main__':
                 'merchant_id': ['nunique'],
                 'merchant_category_id': ['nunique'],
 
-                'year': ['nunique'],
+                # 'year': ['nunique'],
                 'month': ['nunique', 'mean', 'var'],
                 'hour': ['nunique', 'mean', 'min', 'max'],
                 'weekofyear': ['nunique', 'mean', 'min', 'max'],

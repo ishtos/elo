@@ -40,7 +40,7 @@ historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transaction
 historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
 
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
-historical_transactions['year'] = historical_transactions['purchase_date'].dt.year
+# historical_transactions['year'] = historical_transactions['purchase_date'].dt.year
 historical_transactions['month'] = historical_transactions['purchase_date'].dt.month
 historical_transactions['day'] = historical_transactions['purchase_date'].dt.day
 historical_transactions['hour'] = historical_transactions['purchase_date'].dt.hour
@@ -48,7 +48,7 @@ historical_transactions['weekofyear'] = historical_transactions['purchase_date']
 historical_transactions['weekday'] = historical_transactions['purchase_date'].dt.weekday
 historical_transactions['weekend'] = (historical_transactions['purchase_date'].dt.weekday >= 5).astype(int)
 
-historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1e-9)
+historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1)
 
 historical_transactions['month_diff'] = ((datetime.date(2018, 4, 30) - historical_transactions['purchase_date'].dt.date).dt.days) // 30
 historical_transactions['month_diff'] += historical_transactions['month_lag']
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                 'merchant_id': ['nunique'],
                 'merchant_category_id': ['nunique'],
 
-                'year': ['nunique'],
+                # 'year': ['nunique'],
                 'month': ['nunique', 'mean', 'var'],
                 'hour': ['nunique', 'mean', 'min', 'max'],
                 'weekofyear': ['nunique', 'mean', 'min', 'max'],

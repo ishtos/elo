@@ -7,14 +7,14 @@
 # =============================================================================
 # 100 historical
 # =============================================================================
-# python -u 101_init.py
+python -u 101_init.py
 
-# python -u 102_aggregate.py
+python -u 102_aggregate.py
 # python -u 103_aggregate_special_days.py
 # python -u 104_rank_k.py
 # python -u 105_rank_k_with_fractions.py
 # python -u 106_date.py
-# python -u 107_category.py
+python -u 107_category.py
 python -u 108_category2.py
 
 # python -u 111_authorized_aggregate.py
@@ -26,15 +26,17 @@ python -u 108_category2.py
 # python -u 131_pivot_table_purchase_amount.py
 # python -u 132_pivot_table_installments.py
 
+python -u 241_LinearRegression.py
+
 # =============================================================================
 # 200 new_merchant
 # =============================================================================
-# python -u 201_init.py
+python -u 201_init.py
 
-# python -u 202_aggregate.py
+python -u 202_aggregate.py
 # python -u 203_aggregate_special_days.py
 # python -u 204_rank_k.py
-# python -u 205_category.py
+python -u 205_category.py
 python -u 206_category2.py
 
 # python -u 211_authorized_aggregate.py
@@ -42,6 +44,8 @@ python -u 206_category2.py
 
 # python -u 231_pivot_table_purchase_amount.py
 # python -u 232_pivot_table_installments.py
+
+python -u 241_LinearRegression.py
 
 # =============================================================================
 # 300 merchants
