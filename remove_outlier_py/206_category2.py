@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 # 'category_2_max': ['max'],
                 # 'category_2_sum': ['sum'],
 
-                'category_3_mean': stats,
+                # 'category_3_mean': stats,
                 # 'category_3_min': ['min'],
                 # 'category_3_max': ['max'],
                 # 'category_3_sum': ['sum'],

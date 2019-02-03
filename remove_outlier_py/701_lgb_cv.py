@@ -118,14 +118,14 @@ params = {
 
 features = []
 
-features += [f'f10{i}.pkl' for i in (2, 7, 8)]
-# features += [f'f11{i}_{j}.pkl' for i in (1, 2) 
+features += [f'f10{i}.pkl' for i in (2, 7, 8, 9)]
+# features += [f'f11{i}_{j}.pkl' for i in (1,) 
 #                                for j in ('Y', 'N')]
 # features += [f'f12{i}.pkl' for i in (1,)]
 # features += [f'f13{i}.pkl' for i in (1,)]
-# features += [f'f14{i}.pkl' for i in (1,)]
+features += [f'f14{i}.pkl' for i in (1,)]
 
-features += [f'f20{i}.pkl' for i in (2, 5, 6)]
+features += [f'f20{i}.pkl' for i in (2, 5, 6, 7)]
 # features += [f'f23{i}.pkl' for i in (1, 2)]
 # features += [f'f24{i}.pkl' for i in (1,)]
 
@@ -151,9 +151,9 @@ for f in tqdm(features):
     train = pd.merge(train, t, on=KEY, how='left')
     test = pd.merge(test, t, on=KEY, how='left')
 
-t = pd.read_csv('../input/regression.csv')
-train = pd.merge(train, t, on=KEY, how='left')
-test = pd.merge(test, t, on=KEY, how='left')
+# t = pd.read_csv('../input/regression.csv')
+# train = pd.merge(train, t, on=KEY, how='left')
+# test = pd.merge(test, t, on=KEY, how='left')
 
 # =============================================================================
 # add handcrafted features
@@ -165,16 +165,20 @@ df['hist_first_buy'] = (df['hist_purchase_date_min'].dt.date - df['first_active_
 df['hist_last_buy'] = (df['hist_purchase_date_max'].dt.date - df['first_active_month'].dt.date).dt.days
 df['new_first_buy'] = (df['new_purchase_date_min'].dt.date - df['first_active_month'].dt.date).dt.days
 df['new_last_buy'] = (df['new_purchase_date_max'].dt.date - df['first_active_month'].dt.date).dt.days
+# df['Y_hist_auth_first_buy'] = (df['Y_hist_auth_purchase_date_min'].dt.date - df['first_active_month'].dt.date).dt.days
+# df['N_hist_auth_last_buy'] = (df['N_hist_auth_purchase_date_max'].dt.date - df['first_active_month'].dt.date).dt.days
 
 date_features=[
     'hist_purchase_date_max','hist_purchase_date_min',
-    'new_purchase_date_max', 'new_purchase_date_min'
+    'new_purchase_date_max', 'new_purchase_date_min',
+    # 'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
+    # 'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min'
 ]
 
 for f in date_features:
     df[f] = df[f].astype(np.int64) * 1e-9
 
-df['card_id_total'] = df['new_card_id_size'] + df['hist_card_id_size']
+# df['card_id_total'] = df['new_card_id_size'] + df['hist_card_id_size']
 df['card_id_cnt_total'] = df['new_card_id_count'] + df['hist_card_id_count']
 df['card_id_cnt_ratio'] = df['new_card_id_count'] / df['hist_card_id_count']
 df['purchase_amount_total'] = df['new_purchase_amount_sum'] + df['hist_purchase_amount_sum']
@@ -225,16 +229,21 @@ y = train['target']
 col_not_to_use = [
     'first_active_month', 'card_id', 'target', 'outliers',
     'hist_purchase_date_max', 'hist_purchase_date_min', 'hist_card_id_size',
-    'new_purchase_date_max', 'new_purchase_date_min', 'new_card_id_size'
+    'new_purchase_date_max', 'new_purchase_date_min', 'new_card_id_size',
+    'coef_sum', 'intercept_sum',
+    # 'hist_year_nunique', 'hist_hour_max', 'hist_hour_min', 'hist_weekofyear_max', 'hist_weekofyear_min',
+    # 'new_year_nunique', 'new_hour_max', 'new_hour_min', 'new_weekofyear_max', 'new_weekofyear_min',
 ]
 col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c)]
 col_to_use = [c for c in train.columns if c not in col_not_to_use]
-
 
 gc.collect()
 
 X = train[col_to_use]
 X_test = test[col_to_use]
+
+for c in X.columns:
+    print(c)
 
 # ========= ====================================================================
 # cv

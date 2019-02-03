@@ -71,6 +71,9 @@ if __name__ == '__main__':
     result = pool.map(coef_and_intercept, card_ids)
     pool.close()
 
+    df = pd.DataFrame(result)
+    df.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
+
 #==============================================================================
 utils.end(__file__)
 
