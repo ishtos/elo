@@ -24,13 +24,13 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f206'
+PREF = 'f205'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum', 'max', 'min', 'mean', 'var', 'skew']
+stats = ['sum', 'mean', 'var']
 
 # os.system(f'rm ../feature/{PREF}_train.pkl')
 # os.system(f'rm ../feature/{PREF}_test.pkl')

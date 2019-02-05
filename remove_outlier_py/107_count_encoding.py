@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Dec 14 2018
-
 @author: toshiki.ishikawa
 """
 
@@ -23,25 +22,29 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f109'
+PREF = 'f107'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
+stats = ['var']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'installments'])
-historical_transactions = utils.reduce_mem_usage(historical_transactions)
+categorical_columns = ['city_id', 'merchant_category_id', 'merchant_id', 'state_id', 'subsector_id']
 
-historical_transactions['-1_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
-historical_transactions['999_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
-historical_transactions['exception_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=categorical_columns+['card_id'])
+historical_transactions['agg_flag'] = 1
+
+for c in categorical_columns:
+    count_rank = historical_transactions.groupby(c)['agg_flag'].count().rank(ascending=False)
+    historical_transactions[c + '_count'] = historical_transactions[c].map(count_rank)
+
+historical_transactions = utils.reduce_mem_usage(historical_transactions)
 
 # =============================================================================
 #
@@ -52,7 +55,7 @@ def aggregate(args):
 
     agg = historical_transactions.groupby(key).agg(num_aggregations)
     agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
-    agg.reset_index(inplace = True)
+    agg.reset_index(inplace=True)
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
@@ -66,9 +69,11 @@ if __name__ == '__main__':
             'prefix': 'hist_',
             'key': 'card_id',
             'num_aggregations': {
-                # '-1_installments': ['sum'],
-                # '999_installments': ['sum'], 
-                'exception_installments': ['sum'],
+                'city_id_count': stats,
+                'merchant_category_id_count': stats,
+                'merchant_id_count': stats,
+                'state_id_count': stats,
+                'subsector_id_count': stats,
             }
         }
     ]

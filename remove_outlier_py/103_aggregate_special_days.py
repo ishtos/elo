@@ -28,7 +28,7 @@ PREF = 'f103'
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'std']
+stats = ['sum', 'mean', 'var']
 
 # os.system(f'rm ../feature/{PREF}_train.pkl')
 # os.system(f'rm ../feature/{PREF}_test.pkl')
@@ -47,7 +47,7 @@ PATH = os.path.join('..', 'remove_outlier_data')
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
 
-RANGE = 30
+RANGE = 7
 historical_transactions['Mothers_Day_2017'] = (pd.to_datetime('2017-06-04') - historical_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= -RANGE and x <= RANGE else 0)
 historical_transactions['Valentine_Day_2017'] = (pd.to_datetime('2017-06-12') - historical_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= -RANGE and x <= RANGE else 0)
 historical_transactions['fathers_day_2017'] = (pd.to_datetime('2017-08-13') - historical_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= -RANGE and x <= RANGE else 0)
@@ -77,12 +77,12 @@ if __name__ == '__main__':
             'prefix': 'hist_', 
             'key': 'card_id',
             'num_aggregations': {
-                'Christmas_Day_2017': ['sum', 'mean'],
-                'Mothers_Day_2017': ['sum', 'mean'],
-                'fathers_day_2017': ['sum', 'mean'],
-                'Children_day_2017': ['sum', 'mean'],
-                'Valentine_Day_2017': ['sum', 'mean'],
-                'Black_Friday_2017': ['sum', 'mean'],
+                'Christmas_Day_2017': stats,
+                'Mothers_Day_2017': stats,
+                'fathers_day_2017': stats,
+                'Children_day_2017': stats,
+                'Valentine_Day_2017': stats,
+                'Black_Friday_2017': stats,
             }
         }
     ]

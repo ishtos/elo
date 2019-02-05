@@ -102,11 +102,11 @@ if __name__ == '__main__':
 
                 'year': ['nunique'],
                 'month': ['nunique', 'mean', 'var'],
-                'hour': ['nunique', 'mean', 'min', 'max'],
+                'hour': ['nunique', 'mean', 'var'], # 'min', 'max'
                 'weekofyear': ['nunique', 'mean', 'min', 'max'],
-                'day': ['nunique', 'mean'],
-                'weekday': ['mean'],
-                'weekend': ['mean'],
+                'day': ['nunique', 'mean', 'var'], # 'var'
+                'weekday': ['mean', 'var'], # 'var'
+                'weekend': ['mean', 'sum', 'var'], # 'sum', 'var'
               
                 'purchase_amount': ['sum', 'max', 'min', 'mean', 'var', 'skew'],
                 'installments': ['max', 'mean', 'var', 'skew'], # 'sum'
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                 'category_2': ['nunique'], # 'mean'
                 'category_3': ['nunique'], # 'mean'
                 'card_id': ['size', 'count'],
-                'price': ['sum', 'mean', 'max', 'min', 'var'],
+                'price': ['sum', 'mean', 'max', 'min', 'var', 'skew'], # 'skew'
 
                 'duration': ['mean', 'min', 'max', 'var', 'skew'],
                 'amount_month_ratio': ['mean', 'min', 'max', 'var', 'skew'],

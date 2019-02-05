@@ -23,13 +23,13 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f108'
+PREF = 'f105'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum', 'max', 'min', 'mean', 'var', 'skew']
+stats = ['sum', 'mean', 'var']
 
 # =============================================================================
 #
@@ -79,17 +79,17 @@ if __name__ == '__main__':
                 # 'category_3_max': ['max'],
                 # 'category_3_sum': ['sum'],
 
-                'subsector_id_mean': stats,
+                # 'subsector_id_mean': stats,
                 # 'subsector_id_min': ['min'],
                 # 'subsector_id_max': ['max'],
                 # 'subsector_id_sum': ['sum'],
 
-                'merchant_id_mean': stats,
+                # 'merchant_id_mean': stats,
                 # 'merchant_id_min': ['min'],
                 # 'merchant_id_max': ['max'],
                 # 'merchant_id_sum': ['sum'],
 
-                'merchant_category_id_mean': stats,
+                # 'merchant_category_id_mean': stats,
                 # 'merchant_category_id_min': ['min'],
                 # 'merchant_category_id_max': ['max'],
                 # 'merchant_category_id_sum': ['sum'],

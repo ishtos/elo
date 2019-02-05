@@ -118,25 +118,17 @@ params = {
 
 features = []
 
-features += [f'f10{i}.pkl' for i in (2, 7, 8)]
-# features += [f'f11{i}_{j}.pkl' for i in (1, 2) 
+features += [f'f10{i}.pkl' for i in (2, 4, 6, 7)]
+# features += [f'f11{i}_{j}.pkl' for i in (1,) 
 #                                for j in ('Y', 'N')]
 # features += [f'f12{i}.pkl' for i in (1,)]
 # features += [f'f13{i}.pkl' for i in (1,)]
+features += [f'f14{i}.pkl' for i in (1,)]
 
-features += [f'f20{i}.pkl' for i in (2, 5, 6)]
+features += [f'f20{i}.pkl' for i in (2, 4, 6, 7)]
 # features += [f'f23{i}.pkl' for i in (1, 2)]
 
-# features += [f'f30{i}.pkl' for i in (2,)]
-
-# features += [f'f40{i}.pkl' for i in (2, 3)]
-# features += [f'f41{i}_{j}.pkl' for i in (1, 2)
-#                                for j in ('Y', 'N')]
-# features += [f'f42{i}.pkl' for i in (1, 2)]
-
-# features += [f'f50{i}.pkl' for i in (2, )]
-
-# features = os.listdir('../remove_outlier_feature')
+features += [f'f30{i}.pkl' for i in (2,)]
 
 # =============================================================================
 # read data and features
@@ -167,7 +159,9 @@ df['new_last_buy'] = (df['new_purchase_date_max'].dt.date - df['first_active_mon
 
 date_features = [
     'hist_purchase_date_max','hist_purchase_date_min',
-    'new_purchase_date_max', 'new_purchase_date_min'
+    'new_purchase_date_max', 'new_purchase_date_min',
+    # 'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
+    # 'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min'
 ]
 
 for f in date_features:
@@ -188,11 +182,11 @@ df['month_lag_mean'] = df['new_month_lag_mean'] + df['hist_month_lag_mean']
 # df['month_lag_min'] = df['new_month_lag_min'] + df['hist_month_lag_min']
 df['category_1_mean'] = df['new_category_1_mean'] + df['hist_category_1_mean']
 # df['installments_total'] = df['new_installments_sum'] + df['hist_installments_sum']
-df['installments_mean'] = df['new_installments_mean'] + df['hist_installments_mean']
+# df['installments_mean'] = df['new_installments_mean'] + df['hist_installments_mean']
 # df['installments_max'] = df['new_installments_max'] + df['hist_installments_max']
 # df['installments_ratio'] = df['new_installments_sum'] / df['hist_installments_sum']
 # df['price_total'] = df['purchase_amount_total'] / df['installments_total']
-df['price_mean'] = df['purchase_amount_mean'] / df['installments_mean']
+# df['price_mean'] = df['purchase_amount_mean'] / df['installments_mean']
 # df['price_max'] = df['purchase_amount_max'] / df['installments_max']
 df['duration_mean'] = df['new_duration_mean'] + df['hist_duration_mean']
 df['duration_min'] = df['new_duration_min'] + df['hist_duration_min']
@@ -202,7 +196,7 @@ df['amount_month_ratio_min'] = df['new_amount_month_ratio_min'] + df['hist_amoun
 df['amount_month_ratio_max'] = df['new_amount_month_ratio_max'] + df['hist_amount_month_ratio_max']
 df['new_CLV'] = df['new_card_id_count'] * df['new_purchase_amount_sum'] / df['new_month_diff_mean']
 df['hist_CLV'] = df['hist_card_id_count'] * df['hist_purchase_amount_sum'] / df['hist_month_diff_mean']
-df['CLV_ratio'] = df['new_CLV'] / df['hist_CLV']
+# df['CLV_ratio'] = df['new_CLV'] / df['hist_CLV']
 
 train = df[df['target'].notnull()]
 test = df[df['target'].isnull()]
@@ -211,20 +205,8 @@ del df
 gc.collect()
 
 # =============================================================================
-# change date to int
+# target encoding
 # =============================================================================
-# cols = train.columns.values
-# for f in [
-#     'new_purchase_date_max', 'new_purchase_date_min',
-#     'hist_purchase_date_max', 'hist_purchase_date_min', 
-#     'Y_hist_auth_purchase_date_max', 'Y_hist_auth_purchase_date_min', 
-#     'N_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_min',
-#     'Y_new_auth_purchase_date_max', 'Y_new_auth_purchase_date_min', 
-#     'N_new_auth_purchase_date_max', 'N_new_auth_purchase_date_min',
-# ]:
-#     if f in cols:
-#         train[f] = train[f].astype(np.int64) * 1e-9
-#         test[f] = test[f].astype(np.int64) * 1e-9
 
 # =============================================================================
 # drop same values
@@ -240,8 +222,11 @@ y = train['target']
 
 col_not_to_use = [
     'first_active_month', 'card_id', 'target', 'outliers',
-    'hist_purchase_date_max', 'hist_purchase_date_min', 'hist_card_id_size',
-    'new_purchase_date_max', 'new_purchase_date_min', 'new_card_id_size'
+    'hist_card_id_size', 'new_card_id_size'
+    # 'hist_purchase_date_max', 'new_purchase_date_max',
+    # 'hist_purchase_date_min', 'new_purchase_date_min', 
+    # 'hist_month_lag_max', 'hist_month_lag_min', 
+    # 'hist_month_lag_mean', 'hist_month_lag_var' ,'hist_month_lag_skew'
 ]
 col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c)]
 col_to_use = [c for c in train.columns if c not in col_not_to_use]
@@ -252,9 +237,16 @@ gc.collect()
 X = train[col_to_use]
 X_test = test[col_to_use]
 
+for c in col_to_use:
+    print(c, X[c].dtypes)
+
 categorical_features = [
     'feature_1', 'feature_2', 'feature_3',
 ]
+
+for c in categorical_features:
+    X[c] = X[c].astype('category')
+    X_test[c] = X_test[c].astype('category')
 
 # X = pd.get_dummies(X, columns=categorical_features, drop_first=True, dummy_na=True)
 # X_test = pd.get_dummies(X_test, columns=categorical_features, drop_first=True, dummy_na=True)

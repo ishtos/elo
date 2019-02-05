@@ -52,7 +52,7 @@ historical_transactions['weekend'] = (historical_transactions['purchase_date'].d
 
 historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1)
 
-historical_transactions['month_diff'] = ((datetime.date(2018, 4, 30) - historical_transactions['purchase_date'].dt.date).dt.days) // 30
+historical_transactions['month_diff'] = ((datetime.date(2018, 2, 28) - historical_transactions['purchase_date'].dt.date).dt.days) // 30
 historical_transactions['month_diff'] += historical_transactions['month_lag']
 
 historical_transactions['duration'] = historical_transactions['purchase_amount'] * historical_transactions['month_diff']
@@ -75,8 +75,8 @@ def aggregate(args):
         agg[c] = pd.to_datetime(agg[c]) 
     agg['hist_purchase_date_diff'] = (agg['hist_purchase_date_max'].dt.date - agg['hist_purchase_date_min'].dt.date).dt.days
     agg['hist_purchase_date_average'] = agg['hist_purchase_date_diff'] / agg['hist_card_id_size']
-    agg['hist_purchase_date_uptonow'] = (datetime.date(2018, 4, 30) - agg['hist_purchase_date_max'].dt.date).dt.days
-    agg['hist_purchase_date_uptomin'] = (datetime.date(2018, 4, 30) - agg['hist_purchase_date_min'].dt.date).dt.days
+    agg['hist_purchase_date_uptonow'] = (datetime.date(2018, 2, 28) - agg['hist_purchase_date_max'].dt.date).dt.days
+    agg['hist_purchase_date_uptomin'] = (datetime.date(2018, 2, 28) - agg['hist_purchase_date_min'].dt.date).dt.days
 
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
@@ -97,23 +97,23 @@ if __name__ == '__main__':
 
                 'year': ['nunique'],
                 'month': ['nunique', 'mean', 'var'],
-                'hour': ['nunique', 'mean', 'min', 'max'],
+                'hour': ['nunique', 'mean', 'var'], # 'min', 'max'
                 'weekofyear': ['nunique', 'mean', 'min', 'max'],
-                'day': ['nunique', 'mean'],
-                'weekday': ['mean'],
-                'weekend': ['mean'],
+                'day': ['nunique', 'mean', 'var'], # 'var
+                'weekday': ['mean', 'var'], # 'var'
+                'weekend': ['mean', 'sum', 'var'], # 'sum', 'var'
 
                 'purchase_amount': ['sum', 'max', 'min', 'mean', 'var', 'skew'],
                 'installments': ['max', 'mean', 'var', 'skew'], # 'sum'
                 'purchase_date': ['max', 'min'],
-                'month_lag': ['max', 'min', 'mean', 'var', 'skew'], # 'max', 'min', 
-                'month_diff': ['max', 'min', 'mean', 'var', 'skew'], # 'max', 'min'
+                'month_lag': ['max', 'min', 'mean', 'var', 'skew'],
+                'month_diff': ['max', 'min', 'mean', 'var', 'skew'],
                 'authorized_flag': ['sum', 'mean'],
                 'category_1': ['mean'],
                 'category_2': ['nunique'], # 'mean'
                 'category_3': ['nunique'], # 'mean'
                 'card_id': ['size', 'count'],
-                'price': ['sum', 'mean', 'max', 'min', 'var'],
+                'price': ['sum', 'mean', 'max', 'min', 'var', 'skew'], # 'skew'
               
                 'duration': ['mean','min','max','var','skew'],
                 'amount_month_ratio': ['mean','min','max','var','skew'],

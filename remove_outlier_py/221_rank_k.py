@@ -31,7 +31,7 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f104'
+PREF = 'f221'
 
 SUMMARY = 30
 
@@ -52,13 +52,13 @@ def last_k_instalment_features(gr, periods):
         features = utils.add_features_in_group(
             features,gr_period, 
             'installments', 
-            ['max', 'mean', 'var', 'skew'],
+            ['mean'],
             'hist_last_{}_'.format(period))
         
         features = utils.add_features_in_group(
             features,gr_period, 
             'purchase_amount', 
-            ['sum', 'max', 'min', 'mean', 'var', 'skew'],
+            ['sum', 'mean'],
             'hist_last_{}_'.format(period))
     return features
 
@@ -67,22 +67,22 @@ def last_k_instalment_features(gr, periods):
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
 
-historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
-historical_transactions['days'] = (datetime.date(2018, 2, 28) - historical_transactions['purchase_date'].dt.date).dt.days 
-historical_transactions = historical_transactions.query('0 <= installments and installments <= 12')
+new_merchant_transactions['purchase_date'] = pd.to_datetime(new_merchant_transactions['purchase_date'])
+new_merchant_transactions['installments'] = new_merchant_transactions['installments'].astype(int)
+new_merchant_transactions['days'] = (datetime.date(2018, 2, 28) - new_merchant_transactions['purchase_date'].dt.date).dt.days 
+new_merchant_transactions = new_merchant_transactions.query('0 <= installments and installments <= 12')
 
 # =============================================================================
 #
 # =============================================================================
 
-groupby = historical_transactions.groupby('card_id')
+groupby = new_merchant_transactions.groupby('card_id')
 
-func = partial(last_k_instalment_features, periods=[30, 90, 180])
+func = partial(last_k_instalment_features, periods=[7, 30, 90, 180])
 
 g = utils.parallel_apply(groupby, func, index_name='card_id',num_workers=4, chunk_size=10000).reset_index()
-g = g.fillna(0)
 g.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
 #==============================================================================

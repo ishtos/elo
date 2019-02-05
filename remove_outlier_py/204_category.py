@@ -31,22 +31,22 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f107'
+PREF = 'f204'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum','mean','max','min','std', 'median','skew', 'kurt','iqr']
+stats = ['mean', 'var']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'category_2', 'category_3'])
-historical_transactions['category_2'] = historical_transactions['category_2'].astype(int)
-historical_transactions = pd.get_dummies(historical_transactions, columns=['category_2', 'category_3'])
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'category_2', 'category_3'])
+new_merchant_transactions['category_2'] = new_merchant_transactions['category_2'].astype(int)
+new_merchant_transactions = pd.get_dummies(new_merchant_transactions, columns=['category_2', 'category_3'])
 
 # =============================================================================
 #
@@ -54,7 +54,7 @@ historical_transactions = pd.get_dummies(historical_transactions, columns=['cate
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    agg = historical_transactions.groupby(key).agg(num_aggregations)
+    agg = new_merchant_transactions.groupby(key).agg(num_aggregations)
     agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
     agg.reset_index(inplace=True)
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
@@ -67,17 +67,17 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {   
-            'prefix': 'hist_',
+            'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                'category_2_1': ['sum'], # ['sum', 'mean'], 
-                'category_2_2': ['sum'], # ['sum', 'mean'],  
-                'category_2_3': ['sum'], # ['sum', 'mean'], 
-                'category_2_4': ['sum'], # ['sum', 'mean'],
-                'category_2_5': ['sum'], # ['sum', 'mean'], 
-                'category_3_0': ['sum'], # ['sum', 'mean'],
-                'category_3_1': ['sum'], # ['sum', 'mean'], 
-                'category_3_2': ['sum'], # ['sum', 'mean']
+                'category_2_1': stats,
+                'category_2_2': stats, 
+                'category_2_3': stats,
+                'category_2_4': stats, 
+                'category_2_5': stats, 
+                'category_3_0': stats,
+                'category_3_1': stats,
+                'category_3_2': stats,
             }
         }
     ]

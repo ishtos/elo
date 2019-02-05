@@ -109,6 +109,7 @@ for f in [
 #==============================================================================
 categories = [c for d, c in zip(train.dtypes, train.columns) if str(d).startswith('int')]
 numerics = []
+# numerics = [c for d, c in zip(train.dtypes, train.columns) if not str(d).startswith('int')]
 
 pd.DataFrame(data=categories, columns=['ffm_cols']).to_csv('./ffm/ffm_cols.csv', index=False)
 

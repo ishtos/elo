@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec 18 2018
+Created on Fri Dec 14 2018
 
 @author: toshiki.ishikawa
 """
@@ -10,12 +10,11 @@ import os
 import sys
 import gc
 import utils
+import datetime
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-# from datetime import datetime, date
-import datetime
 from sklearn.preprocessing import LabelEncoder
 from multiprocessing import cpu_count, Pool
 
@@ -24,30 +23,25 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f207'
+PREF = 'f106'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'std']
-
-# os.system(f'rm ../feature/{PREF}_train.pkl')
-# os.system(f'rm ../feature/{PREF}_test.pkl')
+stats = ['var']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'installments'])
-new_merchant_transactions = utils.reduce_mem_usage(new_merchant_transactions)
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'installments'])
+historical_transactions = utils.reduce_mem_usage(historical_transactions)
 
-
-new_merchant_transactions['-1_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
-new_merchant_transactions['999_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
-new_merchant_transactions['exception_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
-
+historical_transactions['-1_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
+historical_transactions['999_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
+historical_transactions['exception_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
 
 # =============================================================================
 #
@@ -56,9 +50,9 @@ new_merchant_transactions['exception_installments'] = new_merchant_transactions[
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    agg = new_merchant_transactions.groupby(key).agg(num_aggregations)
+    agg = historical_transactions.groupby(key).agg(num_aggregations)
     agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
-    agg.reset_index(inplace=True)
+    agg.reset_index(inplace = True)
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
@@ -68,13 +62,13 @@ def aggregate(args):
 # =============================================================================
 if __name__ == '__main__':
     argss = [
-        {
-            'prefix': 'new_',
+        {   
+            'prefix': 'hist_',
             'key': 'card_id',
             'num_aggregations': {
-                # '-1_installments': ['sum'],
-                # '999_installments': ['sum'], 
-                'exception_installments': ['sum'],
+                '-1_installments': stats,
+                '999_installments': stats, 
+                'exception_installments': stats,
             }
         }
     ]

@@ -10,57 +10,53 @@ import os
 import sys
 import gc
 import utils
+import warnings
+import random
+import glob
+import datetime
+
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-# from datetime import datetime, date
-import datetime
+from attrdict import AttrDict
+from sklearn.externals import joblib
 from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
 from multiprocessing import cpu_count, Pool
-
+from functools import reduce, partial
+from scipy.stats import skew, kurtosis, iqr
 
 utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f106'
+PREF = 'f104'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
+stats = ['mean', 'var']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
-
-
-historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
-historical_transactions['purchase_month'] = historical_transactions['purchase_date'].dt.month
-historical_transactions['year'] = historical_transactions['purchase_date'].dt.year
-historical_transactions['weekofyear'] = historical_transactions['purchase_date'].dt.weekofyear
-historical_transactions['dayofweek'] = historical_transactions['purchase_date'].dt.dayofweek
-historical_transactions['weekend'] = (historical_transactions['purchase_date'].dt.weekday >= 5).astype(int)
-historical_transactions['hour'] = historical_transactions['purchase_date'].dt.hour
-
-# historical_transactions.loc[:, 'purchase_date'] = pd.DatetimeIndex(historical_transactions['purchase_date']).astype(np.int64) * 1e-9
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'category_2', 'category_3'])
+historical_transactions['category_2'] = historical_transactions['category_2'].astype(int)
+historical_transactions = pd.get_dummies(historical_transactions, columns=['category_2', 'category_3'])
 
 # =============================================================================
 #
 # =============================================================================
-
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
     agg = historical_transactions.groupby(key).agg(num_aggregations)
     agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
     agg.reset_index(inplace=True)
-
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
@@ -72,14 +68,16 @@ if __name__ == '__main__':
     argss = [
         {   
             'prefix': 'hist_',
-            'key': ['card_id'],
+            'key': 'card_id',
             'num_aggregations': {
-                'year': ['nunique'],
-                # 'weekofyear': ['nunique'],
-                # 'month': ['nunique'],
-                # 'dayofweek': ['nunique'],
-                'weekend': ['mean'],
-                # 'hour': ['nunique'],
+                'category_2_1': stats,
+                'category_2_2': stats, 
+                'category_2_3': stats,
+                'category_2_4': stats, 
+                'category_2_5': stats, 
+                'category_3_0': stats,
+                'category_3_1': stats,
+                'category_3_2': stats, 
             }
         }
     ]
@@ -90,3 +88,9 @@ if __name__ == '__main__':
 
 #==============================================================================
 utils.end(__file__)
+
+
+
+
+
+

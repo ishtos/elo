@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Dec 14 2018
-
 @author: toshiki.ishikawa
 """
 
@@ -40,46 +39,58 @@ stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
+PATH = os.path.join('..', 'remove_outlier_data')
+
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
+historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
 
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
-historical_transactions['purchase_month'] = historical_transactions['purchase_date'].dt.month
-historical_transactions['month_diff'] = (datetime.date(2018, 2, 28) - historical_transactions['purchase_date'].dt.date).dt.days // SUMMARY  # TODO: change today
+# historical_transactions['year'] = historical_transactions['purchase_date'].dt.year
+historical_transactions['month'] = historical_transactions['purchase_date'].dt.month
+historical_transactions['day'] = historical_transactions['purchase_date'].dt.day
+historical_transactions['hour'] = historical_transactions['purchase_date'].dt.hour
+historical_transactions['weekofyear'] = historical_transactions['purchase_date'].dt.weekofyear
+historical_transactions['weekday'] = historical_transactions['purchase_date'].dt.weekday
+historical_transactions['weekend'] = (historical_transactions['purchase_date'].dt.weekday >= 5).astype(int)
+
+historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1)
+
+historical_transactions['month_diff'] = ((datetime.date(2018, 4, 30) - historical_transactions['purchase_date'].dt.date).dt.days) // 30
 historical_transactions['month_diff'] += historical_transactions['month_lag']
-historical_transactions['installments'] = historical_transactions['installments'].astype(int)
-historical_transactions['installments_exception'] = historical_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
-# historical_transactions.loc[:, 'purchase_date'] = pd.DatetimeIndex(historical_transactions['purchase_date']).astype(np.int64) * 1e-9
+
+historical_transactions['duration'] = historical_transactions['purchase_amount'] * historical_transactions['month_diff']
+historical_transactions['amount_month_ratio'] = historical_transactions['purchase_amount'] / historical_transactions['month_diff']
+
+historical_transactions = utils.reduce_mem_usage(historical_transactions)
 
 # =============================================================================
 #
 # =============================================================================
-
-
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
     agg = historical_transactions.groupby(key).agg(num_aggregations)
-    agg.columns = [prefix + '_'.join(col).strip()
-                   for col in agg.columns.values]
+    agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
     agg.reset_index(inplace=True)
 
-    df = historical_transactions.groupby('card_id').size().reset_index(name='{}transactions_count'.format(prefix))
-    df = pd.merge(df, agg, on='card_id', how='left')
-    df['hist_auth_purchase_date_diff'] = (df['hist_auth_purchase_date_max'] - df['hist_auth_purchase_date_min']).dt.days
-    df['hist_auth_purchase_date_average'] = df['hist_auth_purchase_date_diff'] / df['hist_auth_transactions_count']
-    df['hist_auth_purchase_date_uptonow'] = (datetime.date(2018, 2, 28) - df['hist_auth_purchase_date_max'].dt.date).dt.days
-    
-    df_Y = df[df.authorized_flag == 1].add_prefix('Y_')
-    df_Y = df_Y.rename(columns={'Y_card_id': 'card_id'})
-    del df_Y['Y_authorized_flag'], df_Y['Y_hist_auth_transactions_count']
+    for c in ['hist_auth_purchase_date_max', 'hist_auth_purchase_date_min']:
+        agg[c] = pd.to_datetime(agg[c]) 
+    agg['hist_auth_purchase_date_diff'] = (agg['hist_auth_purchase_date_max'].dt.date - agg['hist_auth_purchase_date_min'].dt.date).dt.days
+    agg['hist_auth_purchase_date_average'] = agg['hist_auth_purchase_date_diff'] / agg['hist_auth_card_id_size']
+    agg['hist_auth_purchase_date_uptonow'] = (datetime.date(2018, 4, 30) - agg['hist_auth_purchase_date_max'].dt.date).dt.days
+    agg['hist_auth_purchase_date_uptomin'] = (datetime.date(2018, 4, 30) - agg['hist_auth_purchase_date_min'].dt.date).dt.days
+   
+    agg_Y = agg[agg.authorized_flag == 1].add_prefix('Y_')
+    agg_Y = agg_Y.rename(columns={'Y_card_id': 'card_id'})
+    # del agg_Y['Y_authorized_flag'], agg_Y['Y_hist_auth_transactions_count']
 
 
-    df_N = df[df.authorized_flag == 0].add_prefix('N_')
-    df_N = df_N.rename(columns={'N_card_id': 'card_id'})
-    del df_N['N_authorized_flag'], df_N['N_hist_auth_transactions_count']
+    agg_N = agg[agg.authorized_flag == 0].add_prefix('N_')
+    agg_N = agg_N.rename(columns={'N_card_id': 'card_id'})
+    # del agg_N['N_authorized_flag'], agg_N['N_hist_auth_transactions_count']
 
-    df_Y.to_pickle(f'../remove_outlier_feature/{PREF}_Y.pkl')
-    df_N.to_pickle(f'../remove_outlier_feature/{PREF}_N.pkl')
+    agg_Y.to_pickle(f'../remove_outlier_feature/{PREF}_Y.pkl')
+    agg_N.to_pickle(f'../remove_outlier_feature/{PREF}_N.pkl')
 
     return
 
@@ -92,23 +103,31 @@ if __name__ == '__main__':
             'prefix': 'hist_auth_',
             'key': ['card_id', 'authorized_flag'],
             'num_aggregations': {
-                'category_1': ['sum', 'mean'],
-                'category_2': ['nunique'],
-                'category_3': ['nunique'],
-
-                'merchant_id': ['nunique'],
-                'state_id': ['nunique'],
                 'subsector_id': ['nunique'],
-                'city_id': ['nunique'],
+                'merchant_id': ['nunique'],
                 'merchant_category_id': ['nunique'],
 
-                'installments': ['nunique', 'mean', 'std'],
-                'installments_exception': ['sum'],
+                # 'year': ['nunique'],
+                'month': ['nunique', 'mean', 'var'],
+                'hour': ['nunique', 'mean', 'min', 'max'],
+                'weekofyear': ['nunique', 'mean', 'min', 'max'],
+                'day': ['nunique', 'mean'],
+                'weekday': ['mean'],
+                'weekend': ['mean'],
 
-                'purchase_amount': ['sum', 'mean', 'max', 'min', 'std'],
-                'purchase_month': ['median', 'max', 'min', 'std'],
+                'purchase_amount': ['sum', 'max', 'min', 'mean', 'var', 'skew'],
+                'installments': ['max', 'mean', 'var', 'skew'], # 'sum'
                 'purchase_date': ['max', 'min'],
-                'month_diff': ['median', 'max', 'min', 'std'],
+                'month_lag': ['max', 'min', 'mean', 'var', 'skew'], # 'max', 'min', 
+                'month_diff': ['max', 'min', 'mean', 'var', 'skew'], # 'max', 'min'
+                'category_1': ['mean'],
+                'category_2': ['nunique'], # 'mean'
+                'category_3': ['nunique'], # 'mean'
+                'card_id': ['size', 'count'],
+                'price': ['sum', 'mean', 'max', 'min', 'var'],
+              
+                'duration': ['mean','min','max','var','skew'],
+                'amount_month_ratio': ['mean','min','max','var','skew'], 
             }
         }
     ]
