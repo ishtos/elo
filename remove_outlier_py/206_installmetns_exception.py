@@ -30,7 +30,7 @@ SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['var']
+stats = ['mean', 'sum']
 
 # os.system(f'rm ../feature/{PREF}_train.pkl')
 # os.system(f'rm ../feature/{PREF}_test.pkl')
@@ -72,9 +72,9 @@ if __name__ == '__main__':
             'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                '-1_installments': stats,
+                # '-1_installments': stats,
                 '999_installments': stats, 
-                'exception_installments': stats,
+                # 'exception_installments': stats,
             }
         }
     ]

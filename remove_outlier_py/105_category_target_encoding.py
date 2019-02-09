@@ -37,7 +37,9 @@ stats = ['sum', 'mean', 'var']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
-historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
+# historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
+historical_transactions['purchase_amount'] = np.round(historical_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
+
 historical_transactions = utils.reduce_mem_usage(historical_transactions)
 
 for col in ['category_2', 'subsector_id', 'merchant_id', 'merchant_category_id']:
@@ -69,7 +71,7 @@ if __name__ == '__main__':
             'prefix': 'hist_',
             'key': 'card_id',
             'num_aggregations': {
-                'category_2_mean': stats,
+                # 'category_2_mean': stats,
                 # 'category_2_min': ['min'],
                 # 'category_2_max': ['max'],
                 # 'category_2_sum': ['sum'],

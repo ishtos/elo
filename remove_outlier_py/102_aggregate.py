@@ -39,7 +39,8 @@ PATH = os.path.join('..', 'remove_outlier_data')
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
 historical_transactions['installments'].replace(-1, np.nan, inplace=True)
 historical_transactions['installments'].replace(999, np.nan, inplace=True)
-historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
+# historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
+historical_transactions['purchase_amount'] = np.round(historical_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
 
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
 historical_transactions['year'] = historical_transactions['purchase_date'].dt.year
@@ -52,11 +53,11 @@ historical_transactions['weekend'] = (historical_transactions['purchase_date'].d
 
 historical_transactions['price'] = historical_transactions['purchase_amount'] / (historical_transactions['installments'] + 1)
 
-historical_transactions['month_diff'] = ((datetime.date(2018, 2, 28) - historical_transactions['purchase_date'].dt.date).dt.days) // 30
+historical_transactions['month_diff'] = ((datetime.date(2018, 5, 1) - historical_transactions['purchase_date'].dt.date).dt.days) // 30
 historical_transactions['month_diff'] += historical_transactions['month_lag']
 
 historical_transactions['duration'] = historical_transactions['purchase_amount'] * historical_transactions['month_diff']
-historical_transactions['amount_month_ratio'] = historical_transactions['purchase_amount'] / historical_transactions['month_diff']
+historical_transactions['amount_month_ratio'] = historical_transactions['purchase_amount'] / (historical_transactions['month_diff'] + 1)
 
 historical_transactions = utils.reduce_mem_usage(historical_transactions)
 
@@ -75,8 +76,8 @@ def aggregate(args):
         agg[c] = pd.to_datetime(agg[c]) 
     agg['hist_purchase_date_diff'] = (agg['hist_purchase_date_max'].dt.date - agg['hist_purchase_date_min'].dt.date).dt.days
     agg['hist_purchase_date_average'] = agg['hist_purchase_date_diff'] / agg['hist_card_id_size']
-    agg['hist_purchase_date_uptonow'] = (datetime.date(2018, 2, 28) - agg['hist_purchase_date_max'].dt.date).dt.days
-    agg['hist_purchase_date_uptomin'] = (datetime.date(2018, 2, 28) - agg['hist_purchase_date_min'].dt.date).dt.days
+    agg['hist_purchase_date_uptonow'] = (datetime.date(2018, 5, 1) - agg['hist_purchase_date_max'].dt.date).dt.days
+    agg['hist_purchase_date_uptomin'] = (datetime.date(2018, 5, 1) - agg['hist_purchase_date_min'].dt.date).dt.days
 
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 

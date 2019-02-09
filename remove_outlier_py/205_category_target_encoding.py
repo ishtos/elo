@@ -41,7 +41,9 @@ stats = ['sum', 'mean', 'var']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
-new_merchant_transactions['purchase_amount'] = np.log1p(new_merchant_transactions['purchase_amount'] - new_merchant_transactions['purchase_amount'].min())
+# new_merchant_transactions['purchase_amount'] = np.log1p(new_merchant_transactions['purchase_amount'] - new_merchant_transactions['purchase_amount'].min())
+new_merchant_transactions['purchase_amount'] = np.round(new_merchant_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
+
 
 new_merchant_transactions = utils.reduce_mem_usage(new_merchant_transactions)
 
@@ -74,7 +76,7 @@ if __name__ == '__main__':
             'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                'category_2_mean': stats,
+                # 'category_2_mean': stats,
                 # 'category_2_min': ['min'],
                 # 'category_2_max': ['max'],
                 # 'category_2_sum': ['sum'],
@@ -84,17 +86,17 @@ if __name__ == '__main__':
                 # 'category_3_max': ['max'],
                 # 'category_3_sum': ['sum'],
 
-                'subsector_id_mean': stats,
+                # 'subsector_id_mean': stats,
                 # 'subsector_id_min': ['min'],
                 # 'subsector_id_max': ['max'],
                 # 'subsector_id_sum': ['sum'],
 
-                'merchant_id_mean': stats,
+                # 'merchant_id_mean': stats,
                 # 'merchant_id_min': ['min'],
                 # 'merchant_id_max': ['max'],
                 # 'merchant_id_sum': ['sum'],
 
-                'merchant_category_id_mean': stats,
+                # 'merchant_category_id_mean': stats,
                 # 'merchant_category_id_min': ['min'],
                 # 'merchant_category_id_max': ['max'],
                 # 'merchant_category_id_sum': ['sum'],

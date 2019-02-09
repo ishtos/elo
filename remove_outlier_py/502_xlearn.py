@@ -72,7 +72,7 @@ ffm_test = pd.read_csv(f'./ffm/{ftest}.txt', header=None)
 ffm_df = pd.concat([ffm_train, ffm_test])
 
 ffm_df['card_id'] = df['card_id']
-ffm_df = ffm_df.rename(columns={0: 'outlier'})
+ffm_df = ffm_df.rename(columns={0: 'outliers'})
 
 ffm_df.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 

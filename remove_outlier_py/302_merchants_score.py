@@ -31,7 +31,7 @@ PREF = 'f302'
 
 KEY = 'card_id'
 
-stats = ['sum', 'mean', 'var']
+stats = ['sum', 'std']
 
 PATH = os.path.join('..', 'remove_outlier_data')
 
@@ -45,6 +45,8 @@ use_cols = ['merchant_id', 'numerical_1', 'numerical_2',
             'avg_sales_lag12', 'avg_purchases_lag12', 'active_months_lag12']
 merchants = pd.read_csv(os.path.join(PATH, 'merchants.csv'), usecols=use_cols)
 merchants = merchants.drop_duplicates(subset=['merchant_id'], keep='first').reset_index(drop=True)
+merchants['numerical_1'] = np.round(merchants['numerical_1'] / 0.009914905 + 5.79639, 0)
+merchants['numerical_2'] = np.round(merchants['numerical_2'] / 0.009914905 + 5.79639, 0)
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'merchant_id'])
 merchants = pd.merge(historical_transactions, merchants, on='merchant_id', how='left')
 
@@ -61,8 +63,8 @@ for i in (3, 6, 12):
 num_aggregations = {
     # 'most_recent_sales_range': 'mean', 
     # 'most_recent_purchases_range': 'mean', 
-    'numerical_1': stats,
-    'numerical_2': stats,
+    'numerical_1': ['nunique', 'std', 'min', 'max'],
+    'numerical_2': ['nunique', 'std', 'min', 'max'],
     'avg_rate_lag3': stats,
     'avg_rate_lag6': stats,
     'avg_rate_lag12': stats,

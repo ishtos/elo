@@ -10,11 +10,12 @@ import os
 import sys
 import gc
 import utils
-import datetime
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
+# from datetime import datetime, date
+import datetime
 from sklearn.preprocessing import LabelEncoder
 from multiprocessing import cpu_count, Pool
 
@@ -23,37 +24,40 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f106'
+PREF = 'f131'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum', 'mean']
+stats = ['min', 'max', 'mean', 'var']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'installments'])
-historical_transactions = utils.reduce_mem_usage(historical_transactions)
-
-historical_transactions['-1_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
-historical_transactions['999_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
-historical_transactions['exception_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
+# historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
+historical_transactions['purchase_amount'] = np.round(historical_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
 
 # =============================================================================
 #
 # =============================================================================
 
 def aggregate(args):
-    prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
+    prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
 
-    agg = historical_transactions.groupby(key).agg(num_aggregations)
-    agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
-    agg.reset_index(inplace = True)
-    agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
+    pt = historical_transactions.pivot_table(
+            index=index,
+            columns=columns,
+            values=values,
+            aggfunc=stats).reset_index()
+    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_') for c in pt.columns]
+    pt = pt.add_prefix(prefix)
+    pt = pt.rename(columns={prefix+KEY: KEY})
+
+    pt.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
 
@@ -62,14 +66,11 @@ def aggregate(args):
 # =============================================================================
 if __name__ == '__main__':
     argss = [
-        {   
+        { 
             'prefix': 'hist_',
-            'key': 'card_id',
-            'num_aggregations': {
-                # '-1_installments': stats,
-                '999_installments': stats, 
-                # 'exception_installments': stats,
-            }
+            'index': 'card_id',
+            'columns': 'month_lag',
+            'values': ['purchase_amount']
         }
     ]
 
