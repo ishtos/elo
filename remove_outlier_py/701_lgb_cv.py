@@ -21,6 +21,7 @@ from tqdm import tqdm
 from collections import defaultdict
 from multiprocessing import cpu_count, Pool
 
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.metrics import mean_squared_error
@@ -88,7 +89,7 @@ features += [f'f10{i}.pkl' for i in (2, 4,)]
 #                                for j in ('Y', 'N')]
 # features += [f'f12{i}.pkl' for i in (1,)]
 # features += [f'f13{i}.pkl' for i in (3,)]
-# features += [f'f14{i}.pkl' for i in (1,)]
+features += [f'f14{i}.pkl' for i in (1,)]
 
 features += [f'f20{i}.pkl' for i in (2, 4,)]
 # features += [f'f23{i}.pkl' for i in (1, 2)]
@@ -126,26 +127,26 @@ for f in date_features:
     df[f] = df[f].astype(np.int64) * 1e-9
 
 # df['card_id_total'] = df['new_card_id_size'] + df['hist_card_id_size']
-df['card_id_cnt_total'] = df['new_card_id_count'] + df['hist_card_id_count']
+# df['card_id_cnt_total'] = df['new_card_id_count'] + df['hist_card_id_count']
 # df['card_id_cnt_ratio'] = df['new_card_id_count'] / df['hist_card_id_count']
 df['purchase_amount_total'] = df['new_purchase_amount_sum'] + df['hist_purchase_amount_sum']
 df['purchase_amount_mean'] = df['new_purchase_amount_mean'] + df['hist_purchase_amount_mean']
-df['purchase_amount_max'] = df['new_purchase_amount_max'] + df['hist_purchase_amount_max']
+# df['purchase_amount_max'] = df['new_purchase_amount_max'] + df['hist_purchase_amount_max']
 df['purchase_amount_min'] = df['new_purchase_amount_min'] + df['hist_purchase_amount_min']
 # df['purchase_amount_ratio'] = df['new_purchase_amount_sum'] / df['hist_purchase_amount_sum']
+# df['month_diff_min'] = df['new_month_diff_min'] + df['hist_month_diff_min']
 # df['month_diff_mean'] = df['new_month_diff_mean'] + df['hist_month_diff_mean']
 # df['month_diff_ratio'] = df['new_month_diff_mean'] / df['hist_month_diff_mean']
 # df['month_lag_mean'] = df['new_month_lag_mean'] + df['hist_month_lag_mean']
-# df['month_lag_max'] = df['new_month_lag_max'] + df['hist_month_lag_max']
 # df['month_lag_min'] = df['new_month_lag_min'] + df['hist_month_lag_min']
 # df['category_1_mean'] = df['new_category_1_mean'] + df['hist_category_1_mean']
 # df['installments_total'] = df['new_installments_sum'] + df['hist_installments_sum']
 # df['installments_mean'] = df['new_installments_mean'] + df['hist_installments_mean']
-# df['installments_max'] = df['new_installments_max'] + df['hist_installments_max']
+# df['installments_min'] = df['new_installments_min'] + df['hist_installments_min']
 # df['installments_ratio'] = df['new_installments_sum'] / df['hist_installments_sum']
 # df['price_total'] = df['purchase_amount_total'] / df['installments_total']
 # df['price_mean'] = df['purchase_amount_mean'] / df['installments_mean']
-# df['price_max'] = df['purchase_amount_max'] / df['installments_max']
+# df['price_min'] = df['purchase_amount_min'] / df['installments_min']
 # df['duration_mean'] = df['new_duration_mean'] + df['hist_duration_mean']
 # df['duration_min'] = df['new_duration_min'] + df['hist_duration_min']
 # df['duration_max'] = df['new_duration_max'] + df['hist_duration_max']
@@ -156,8 +157,31 @@ df['sum_new_CLV'] = df['new_card_id_count'] * df['new_purchase_amount_sum'] / df
 df['sum_hist_CLV'] = df['hist_card_id_count'] * df['hist_purchase_amount_sum'] / df['hist_month_diff_mean']
 df['sum_CLV_ratio'] = df['sum_new_CLV'] / df['sum_hist_CLV']
 
+df['outliers_1'] = df['hist_month_nunique'].apply(lambda x: np.where(x > 3, 1, 0))
+df['outliers_2'] = df['hist_month_diff_min'].apply(lambda x: np.where(x < 13, 1, 0))
+df['outliers_3'] = df['hist_month_diff_max'].apply(lambda x: np.where(x < 14, 1, 0))
+df['outliers_4'] = df['hist_month_lag_max'].apply(lambda x: np.where(x > -7, 1, 0))
+df['outliers_5'] = df['hist_month_lag_min'].apply(lambda x: np.where(x < -2, 1, 0))
+
+df['outliers_sum'] = df[['outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5']].apply(np.sum, axis=1)
+
+df['nans'] = df.isnull().sum(axis=1)
+
 train = df[df['target'].notnull()]
 test = df[df['target'].isnull()]
+
+categorical_features = ['feature_1', 'feature_2', 'feature_3']
+pca = PCA(n_components=1)
+pca.fit(train[categorical_features])
+pca_train_values = pca.transform(train[categorical_features])
+pca_test_values = pca.transform(test[categorical_features])
+
+pca_train_values = np.transpose(pca_train_values, (1, 0))
+pca_test_values = np.transpose(pca_test_values, (1, 0))
+
+for e, (pca_train, pca_test) in enumerate(zip(pca_train_values, pca_test_values)):
+    train[f'pca_feature_{e}'] = pca_train
+    test[f'pca_feature_{e}'] = pca_test
 
 del df
 gc.collect()
@@ -173,52 +197,27 @@ gc.collect()
 # =============================================================================
 # preprocess
 # =============================================================================
-train['nan_count'] = train.isnull().sum(axis=1)
-test['nan_count'] = test.isnull().sum(axis=1)
-
-
-for df in (train, test):
-    df['outliers_1'] = df['hist_month_nunique'].apply(lambda x: np.where(x > 3, 1, 0))
-    df['outliers_2'] = df['hist_month_diff_min'].apply(lambda x: np.where(x < 13, 1, 0))
-    df['outliers_3'] = df['hist_month_diff_max'].apply(lambda x: np.where(x < 14, 1, 0))
-    df['outliers_4'] = df['hist_month_lag_max'].apply(lambda x: np.where(x > -7, 1, 0))
-    df['outliers_5'] = df['hist_month_lag_min'].apply(lambda x: np.where(x < -2, 1, 0))
-
-    df['outliers_sum'] = df[['outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5']].apply(np.sum, axis=1)
-
 y = train['target']
 
 col_not_to_use = [
+    'feature_1', 'feature_2', 'feature_3',
     'first_active_month', 'card_id', 'target', 'outliers',
+    'hist_purchase_date_max', 'new_purchase_date_max',
+    'hist_purchase_date_uptonow' , 'new_purchase_date_uptonow',
     'hist_card_id_size', 'new_card_id_size',
-    # 'hist_purchase_date_max', 'new_purchase_date_max',
-    # 'hist_purchase_date_min', 'new_purchase_date_min', 
-    # 'hist_month_lag_max', 'hist_month_lag_min', 
-    # 'hist_month_lag_mean', 'hist_month_lag_var' ,'hist_month_lag_skew'
-
-    # 'new_purchase_date_max', 'new_purchase_date_min',
-
-    'numerical_1_mean', 'numerical_2_mean', 
-    'avg_rate_lag3_mean', 'avg_rate_lag6_mean', 'avg_rate_lag12_mean',
-    'active_months_lag3_mean', 'active_months_lag6_mean', 'active_months_lag12_mean',
-    'outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5'
+    # 'numerical_1_mean', 'numerical_2_mean', 
+    # 'avg_rate_lag3_mean', 'avg_rate_lag6_mean', 'avg_rate_lag12_mean',
+    # 'active_months_lag3_mean', 'active_months_lag6_mean', 'active_months_lag12_mean',
+    # 'outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5'
 ]
 
-col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c) or ('skew' in c)]
+col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c) or ('skew' in c) or ('new_installments' in c)]
 col_to_use = [c for c in train.columns if c not in col_not_to_use]
 
 gc.collect()
 
 X = train[col_to_use]
 X_test = test[col_to_use]
-
-categorical_features = [
-    'feature_1', 'feature_2', 'feature_3',
-]
-
-for c in categorical_features:
-    X[c] = X[c].astype('category')
-    X_test[c] = X_test[c].astype('category')
 
 # =============================================================================
 # cv

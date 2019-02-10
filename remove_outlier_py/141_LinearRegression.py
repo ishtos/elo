@@ -36,6 +36,7 @@ PATH = os.path.join('..', 'remove_outlier_data')
 # =============================================================================
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'purchase_amount', 'month_lag', 'purchase_date'])
 historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
+card_ids = historical_transactions['card_id'].unique()
 
 historical_transactions = historical_transactions.sort_values(by=['card_id', 'purchase_date'])[['card_id', 'month_lag', 'purchase_amount']]
 
@@ -70,8 +71,6 @@ def coef_and_intercept(card_id):
 #
 # =============================================================================
 if __name__ == '__main__':
-    card_ids = historical_transactions['card_id'].unique()
-
     pool = Pool(NTHREAD)
     result = pool.map(coef_and_intercept, card_ids)
     pool.close()

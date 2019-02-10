@@ -36,6 +36,7 @@ PATH = os.path.join('..', 'remove_outlier_data')
 # =============================================================================
 new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'purchase_amount', 'month_lag', 'purchase_date'])
 new_merchant_transactions['purchase_amount'] = np.log1p(new_merchant_transactions['purchase_amount'] - new_merchant_transactions['purchase_amount'].min())
+card_ids = list(new_merchant_transactions['card_id'].unique())
 
 new_merchant_transactions = new_merchant_transactions.sort_values(by=['card_id', 'purchase_date'])[['card_id', 'month_lag', 'purchase_amount']]
 
@@ -44,17 +45,18 @@ num_aggregations = {
 }
 
 new_merchant_transactions = new_merchant_transactions.groupby(['card_id', 'month_lag']).agg(num_aggregations).reset_index()
-new_merchant_transactions.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in new_merchant_transactions.columns]
+# new_merchant_transactions.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in new_merchant_transactions.columns]
 
 columns = [c for c in new_merchant_transactions.columns if c != 'card_id']
+
+print(new_merchant_transactions.columns)
 
 # =============================================================================
 #
 # =============================================================================
-
 def coef_and_intercept(card_id):
-    x = new_merchant_transactions.loc[new_merchant_transactions.card_id == card_id].index
-    y = new_merchant_transactions.loc[new_merchant_transactions.card_id == card_id][c]
+    x = new_merchant_transactions.loc[new_merchant_transactions['card_id'] == card_id].index
+    y = new_merchant_transactions.loc[new_merchant_transactions['card_id'] == card_id][c]
     
     model = sm.OLS(y, sm.add_constant(x)).fit()
     
@@ -70,8 +72,6 @@ def coef_and_intercept(card_id):
 #
 # =============================================================================
 if __name__ == '__main__':
-    card_ids = new_merchant_transactions['card_id'].unique()
-
     pool = Pool(NTHREAD)
     result = pool.map(coef_and_intercept, card_ids)
     pool.close()

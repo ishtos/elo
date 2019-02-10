@@ -105,7 +105,7 @@ if __name__ == '__main__':
                 'weekend': ['mean', 'sum', 'var'], # 'sum', 'var'
 
                 'purchase_amount': ['sum', 'max', 'min', 'mean', 'var', 'skew'],
-                'installments': ['max', 'mean', 'var', 'skew'], # 'sum'
+                'installments': ['max', 'min', 'mean', 'var', 'skew'], # 'sum'
                 'purchase_date': ['max', 'min'],
                 'month_lag': ['max', 'min', 'mean', 'var', 'skew'],
                 'month_diff': ['max', 'min', 'mean', 'var', 'skew'],
