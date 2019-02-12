@@ -24,24 +24,30 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f233'
+PREF = 'f134'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean']
+stats = 'count'
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
-new_merchant_transactions['installments'].replace(-1, np.nan, inplace=True)
-new_merchant_transactions['installments'].replace(999, np.nan, inplace=True)
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['purchase_date', 'card_id'])
 
-new_merchant_transactions['purchase_amount'] = np.round(new_merchant_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
+grouped = historical_transactions.groupby('card_id')['purchase_date'].min().reset_index()
+grouped.rename(columns={'purchase_date': 'purchase_date_min'}, inplace=True)
+
+historical_transactions = pd.merge(historical_transactions, grouped, on='card_id', how='left')
+historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
+historical_transactions['purchase_date_min'] = pd.to_datetime(historical_transactions['purchase_date_min'])
+historical_transactions['days'] = (historical_transactions['purchase_date'].dt.date - historical_transactions['purchase_date_min'].dt.date).dt.days
+historical_transactions['round_days'] = (np.ceil(historical_transactions['days'] // 10) * 10).astype(int)
+historical_transactions['agg_flag'] = 1
 
 # =============================================================================
 #
@@ -51,12 +57,12 @@ new_merchant_transactions['purchase_amount'] = np.round(new_merchant_transaction
 def aggregate(args):
     prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
 
-    pt = new_merchant_transactions.pivot_table(
+    pt = historical_transactions.pivot_table(
             index=index,
             columns=columns,
             values=values,
             aggfunc=stats).reset_index()
-    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_') for c in pt.columns]
+    pt.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in pt.columns]
     pt = pt.add_prefix(prefix)
     pt = pt.rename(columns={prefix+KEY: KEY})
 
@@ -71,10 +77,10 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {
-            'prefix': 'new_',
+            'prefix': 'hist_',
             'index': 'card_id',
-            'columns': 'installments',
-            'values': ['purchase_amount']
+            'columns': ['round_days'],
+            'values': ['agg_flag']
         }
     ]
 

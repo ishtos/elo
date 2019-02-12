@@ -29,7 +29,7 @@ SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum', 'mean', 'var']
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
@@ -42,7 +42,7 @@ historical_transactions['purchase_amount'] = np.round(historical_transactions['p
 
 historical_transactions = utils.reduce_mem_usage(historical_transactions)
 
-for col in ['category_2', 'subsector_id', 'merchant_id', 'merchant_category_id']:
+for col in ['category_2', 'category_3', 'subsector_id', 'merchant_id', 'merchant_category_id']:
     historical_transactions[col + '_mean'] = historical_transactions.groupby([col])['purchase_amount'].transform('mean')
     # historical_transactions[col + '_min'] = historical_transactions.groupby([col])['purchase_amount'].transform('min')
     # historical_transactions[col + '_max'] = historical_transactions.groupby([col])['purchase_amount'].transform('max')
@@ -71,27 +71,27 @@ if __name__ == '__main__':
             'prefix': 'hist_',
             'key': 'card_id',
             'num_aggregations': {
-                # 'category_2_mean': stats,
+                'category_2_mean': stats,
                 # 'category_2_min': ['min'],
                 # 'category_2_max': ['max'],
                 # 'category_2_sum': ['sum'],
 
-                # 'category_3_mean': ['mean'],
+                'category_3_mean': stats,
                 # 'category_3_min': ['min'],
                 # 'category_3_max': ['max'],
                 # 'category_3_sum': ['sum'],
 
-                # 'subsector_id_mean': stats,
+                'subsector_id_mean': stats,
                 # 'subsector_id_min': ['min'],
                 # 'subsector_id_max': ['max'],
                 # 'subsector_id_sum': ['sum'],
 
-                # 'merchant_id_mean': stats,
+                'merchant_id_mean': stats,
                 # 'merchant_id_min': ['min'],
                 # 'merchant_id_max': ['max'],
                 # 'merchant_id_sum': ['sum'],
 
-                # 'merchant_category_id_mean': stats,
+                'merchant_category_id_mean': stats,
                 # 'merchant_category_id_min': ['min'],
                 # 'merchant_category_id_max': ['max'],
                 # 'merchant_category_id_sum': ['sum'],

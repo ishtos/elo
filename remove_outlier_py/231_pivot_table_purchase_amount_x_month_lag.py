@@ -67,7 +67,7 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         { 
-            'prefix': 'hist_',
+            'prefix': 'new_',
             'index': 'card_id',
             'columns': 'month_lag',
             'values': ['purchase_amount']

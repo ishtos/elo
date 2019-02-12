@@ -28,7 +28,7 @@ PREF = 'f103'
 
 KEY = 'card_id'
 
-stats = ['mean', 'var']
+stats = ['mean']
 
 # os.system(f'rm ../feature/{PREF}_train.pkl')
 # os.system(f'rm ../feature/{PREF}_test.pkl')
@@ -47,7 +47,7 @@ PATH = os.path.join('..', 'remove_outlier_data')
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
 historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
 
-RANGE = 60
+RANGE = 30
 historical_transactions['Mothers_Day_2017'] = (pd.to_datetime('2017-06-04') - historical_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
 historical_transactions['Valentine_Day_2017'] = (pd.to_datetime('2017-06-12') - historical_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
 historical_transactions['fathers_day_2017'] = (pd.to_datetime('2017-08-13') - historical_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)

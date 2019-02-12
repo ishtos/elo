@@ -84,17 +84,15 @@ params = {
 
 features = []
 
-features += [f'f10{i}.pkl' for i in (2, 4,)]
-# features += [f'f11{i}_{j}.pkl' for i in (1,) 
-#                                for j in ('Y', 'N')]
-# features += [f'f12{i}.pkl' for i in (1,)]
-# features += [f'f13{i}.pkl' for i in (3,)]
-features += [f'f14{i}.pkl' for i in (1,)]
+features += [f'f10{i}.pkl' for i in (2, 3, 4, 5, 6, 7, 8)]
+features += [f'f11{i}_{j}.pkl' for i in (1,) 
+                               for j in ('Y', 'N')]
+features += [f'f13{i}.pkl' for i in (1, 3, 4)]
 
-features += [f'f20{i}.pkl' for i in (2, 4,)]
-# features += [f'f23{i}.pkl' for i in (1, 2)]
+features += [f'f20{i}.pkl' for i in (2, 3, 4, 5, 6, 7)]
+# features += [f'f23{i}.pkl' for i in (1, 3)]
 
-features += [f'f30{i}.pkl' for i in (2,)]
+features += [f'f30{i}.pkl' for i in (2, )]
 
 # =============================================================================
 # read data and features
@@ -120,6 +118,8 @@ df['new_last_buy'] = (df['new_purchase_date_max'].dt.date - df['first_active_mon
 
 date_features = [
     'hist_purchase_date_max','hist_purchase_date_min',
+    'Y_hist_auth_purchase_date_min', 'N_hist_auth_purchase_date_min',
+    'Y_hist_auth_purchase_date_max', 'N_hist_auth_purchase_date_max'
     'new_purchase_date_max', 'new_purchase_date_min',
 ]
 
@@ -129,10 +129,10 @@ for f in date_features:
 # df['card_id_total'] = df['new_card_id_size'] + df['hist_card_id_size']
 # df['card_id_cnt_total'] = df['new_card_id_count'] + df['hist_card_id_count']
 # df['card_id_cnt_ratio'] = df['new_card_id_count'] / df['hist_card_id_count']
-df['purchase_amount_total'] = df['new_purchase_amount_sum'] + df['hist_purchase_amount_sum']
-df['purchase_amount_mean'] = df['new_purchase_amount_mean'] + df['hist_purchase_amount_mean']
+# df['purchase_amount_total'] = df['new_purchase_amount_sum'] + df['hist_purchase_amount_sum']
+# df['purchase_amount_mean'] = df['new_purchase_amount_mean'] + df['hist_purchase_amount_mean']
 # df['purchase_amount_max'] = df['new_purchase_amount_max'] + df['hist_purchase_amount_max']
-df['purchase_amount_min'] = df['new_purchase_amount_min'] + df['hist_purchase_amount_min']
+# df['purchase_amount_min'] = df['new_purchase_amount_min'] + df['hist_purchase_amount_min']
 # df['purchase_amount_ratio'] = df['new_purchase_amount_sum'] / df['hist_purchase_amount_sum']
 # df['month_diff_min'] = df['new_month_diff_min'] + df['hist_month_diff_min']
 # df['month_diff_mean'] = df['new_month_diff_mean'] + df['hist_month_diff_mean']
@@ -157,13 +157,13 @@ df['sum_new_CLV'] = df['new_card_id_count'] * df['new_purchase_amount_sum'] / df
 df['sum_hist_CLV'] = df['hist_card_id_count'] * df['hist_purchase_amount_sum'] / df['hist_month_diff_mean']
 df['sum_CLV_ratio'] = df['sum_new_CLV'] / df['sum_hist_CLV']
 
-df['outliers_1'] = df['hist_month_nunique'].apply(lambda x: np.where(x > 3, 1, 0))
-df['outliers_2'] = df['hist_month_diff_min'].apply(lambda x: np.where(x < 13, 1, 0))
-df['outliers_3'] = df['hist_month_diff_max'].apply(lambda x: np.where(x < 14, 1, 0))
-df['outliers_4'] = df['hist_month_lag_max'].apply(lambda x: np.where(x > -7, 1, 0))
-df['outliers_5'] = df['hist_month_lag_min'].apply(lambda x: np.where(x < -2, 1, 0))
+# df['outliers_1'] = df['hist_month_nunique'].apply(lambda x: np.where(x > 3, 1, 0))
+# df['outliers_2'] = df['hist_month_diff_min'].apply(lambda x: np.where(x < 13, 1, 0))
+# df['outliers_3'] = df['hist_month_diff_max'].apply(lambda x: np.where(x < 14, 1, 0))
+# df['outliers_4'] = df['hist_month_lag_max'].apply(lambda x: np.where(x > -7, 1, 0))
+# df['outliers_5'] = df['hist_month_lag_min'].apply(lambda x: np.where(x < -2, 1, 0))
 
-df['outliers_sum'] = df[['outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5']].apply(np.sum, axis=1)
+# df['outliers_sum'] = df[['outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5']].apply(np.sum, axis=1)
 
 df['nans'] = df.isnull().sum(axis=1)
 
@@ -199,20 +199,125 @@ gc.collect()
 # =============================================================================
 y = train['target']
 
-col_not_to_use = [
-    'feature_1', 'feature_2', 'feature_3',
-    'first_active_month', 'card_id', 'target', 'outliers',
-    'hist_purchase_date_max', 'new_purchase_date_max',
-    'hist_purchase_date_uptonow' , 'new_purchase_date_uptonow',
-    'hist_card_id_size', 'new_card_id_size',
-    # 'numerical_1_mean', 'numerical_2_mean', 
-    # 'avg_rate_lag3_mean', 'avg_rate_lag6_mean', 'avg_rate_lag12_mean',
-    # 'active_months_lag3_mean', 'active_months_lag6_mean', 'active_months_lag12_mean',
-    # 'outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5'
-]
+# col_not_to_use = [
+#     'feature_1', 'feature_2', 'feature_3',
+#     'first_active_month', 'card_id', 'target', 'outliers',
+#     'hist_purchase_date_max', 'new_purchase_date_max',
+#     'hist_purchase_date_uptonow' , 'new_purchase_date_uptonow',
+#     'hist_card_id_size', 'new_card_id_size',
+#     'numerical_1_mean', 'numerical_2_mean', 
+#     'avg_rate_lag3_mean', 'avg_rate_lag6_mean', 'avg_rate_lag12_mean',
+#     'active_months_lag3_mean', 'active_months_lag6_mean', 'active_months_lag12_mean',
+#     'outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5'
+# ]
 
-col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c) or ('skew' in c) or ('new_installments' in c)]
-col_to_use = [c for c in train.columns if c not in col_not_to_use]
+# col_not_to_use += [c for c in train.columns if ('duration' in c) or ('amount_month_ratio' in c) or ('skew' in c) or ('new_installments' in c)]
+# col_to_use = [c for c in train.columns if c not in col_not_to_use]
+col_to_use = [
+'feature_1',
+ 'feature_2',
+ 'elapsed_time',
+ 'feature_1_outliers_mean',
+ 'feature_1_outliers_sum',
+ 'feature_2_outliers_mean',
+ 'hist_subsector_id_nunique',
+ 'hist_year_nunique',
+ 'hist_month_nunique',
+ 'hist_month_mean',
+ 'hist_month_min',
+ 'hist_month_max',
+ 'hist_hour_nunique',
+ 'hist_hour_min',
+ 'hist_hour_max',
+ 'hist_weekofyear_nunique',
+ 'hist_weekofyear_min',
+ 'hist_day_nunique',
+ 'hist_weekday_mean',
+ 'hist_weekday_min',
+ 'hist_weekday_max',
+ 'hist_purchase_amount_sum',
+ 'hist_purchase_amount_min',
+ 'hist_purchase_amount_mean',
+ 'hist_installments_sum',
+ 'hist_installments_max',
+ 'feature_3',
+ 'feature_2_outliers_sum',
+ 'hist_merchant_id_nunique',
+ 'hist_purchase_amount_skew',
+ 'hist_purchase_date_max',
+ 'hist_month_lag_max',
+ 'hist_month_lag_min',
+ 'hist_month_lag_mean',
+ 'hist_month_diff_mean',
+ 'hist_month_diff_std',
+ 'hist_authorized_flag_sum',
+ 'hist_authorized_flag_mean',
+ 'hist_authorized_flag_std',
+ 'hist_authorized_flag_skew',
+ 'hist_category_1_mean',
+ 'hist_category_2_nunique',
+ 'hist_category_2_4_mean',
+ 'hist_category_3_0_mean',
+ 'hist_category_3_1_mean',
+ 'hist_merchant_category_id_count_sum',
+ 'hist_merchant_id_count_sum',
+ 'hist_merchant_id_count_mean',
+ 'hist_merchant_id_count_std',
+ 'new_city_minus_one_sum',
+ 'new_city_minus_one_mean',
+ 'new_city_minus_one_std',
+ 'Y_hist_auth_subsector_id_nunique',
+ 'Y_hist_auth_merchant_id_nunique',
+ 'Y_hist_auth_merchant_category_id_nunique',
+ 'Y_hist_auth_month_nunique',
+ 'Y_hist_auth_day_nunique',
+ 'Y_hist_auth_weekday_max',
+ 'Y_hist_auth_purchase_amount_sum',
+ 'Y_hist_auth_purchase_date_min',
+ 'Y_hist_auth_month_lag_min',
+ 'Y_hist_auth_month_lag_std',
+ 'Y_hist_auth_month_diff_mean',
+ 'Y_hist_auth_category_1_mean',
+ 'Y_hist_auth_category_2_mean',
+ 'Y_hist_auth_price_mean',
+ 'Y_hist_auth_duration_mean',
+ 'N_hist_auth_subsector_id_nunique',
+ 'N_hist_auth_merchant_id_nunique',
+ 'N_hist_auth_merchant_category_id_nunique',
+ 'new_subsector_id_nunique',
+ 'new_merchant_id_nunique',
+ 'new_merchant_category_id_nunique',
+ 'new_year_nunique',
+ 'new_month_nunique',
+ 'new_month_mean',
+ 'new_month_min',
+ 'new_hour_mean',
+ 'new_weekofyear_mean',
+ 'new_weekofyear_min',
+ 'new_weekofyear_max',
+ 'new_day_mean',
+ 'new_day_max',
+ 'new_purchase_amount_sum',
+ 'new_purchase_amount_max',
+ 'new_purchase_amount_min',
+ 'new_installments_skew',
+ 'new_purchase_date_max',
+ 'new_purchase_date_min',
+ 'new_month_lag_max',
+ 'new_month_lag_mean',
+ 'new_month_lag_std',
+ 'new_month_diff_mean',
+ 'new_category_1_mean',
+ 'new_price_min',
+ 'new_duration_skew',
+ 'new_purchase_date_diff',
+ 'new_purchase_date_average',
+ 'new_purchase_date_uptonow',
+ 'new_Black_Friday_2017_mean',
+ 'new_category_2_1_mean',
+ 'new_category_2_2_sum',
+ 'new_category_2_2_mean'
+]
 
 gc.collect()
 
