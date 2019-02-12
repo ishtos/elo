@@ -10,12 +10,12 @@ import os
 import gc
 import sys
 import utils
+import datetime
 import numpy as np
 import pandas as pd
 
 from glob import glob
 from tqdm import tqdm
-from datetime import datetime, date
 from collections import defaultdict
 from multiprocessing import cpu_count, Pool
 
@@ -24,7 +24,6 @@ from sklearn.model_selection import StratifiedKFold, KFold
 from sklearn.metrics import mean_squared_error
 from sklearn.decomposition import PCA
 
-
 import xgboost as xgb
 
 import warnings
@@ -32,7 +31,22 @@ warnings.simplefilter('ignore')
 
 utils.start(__file__)
 #==============================================================================
-PATH = os.path.join('..', 'data')
+# Logger
+#==============================================================================
+from logging import getLogger, FileHandler, Formatter, DEBUG
+logger = getLogger(__name__)
+logger.setLevel(DEBUG)
+
+file_handler = FileHandler('log_outlier_{}'.format(str(datetime.datetime.today().date()).replace('-', '')))
+formatter = Formatter('%(message)s')
+file_handler.setFormatter(formatter)
+file_handler.setLevel(DEBUG)
+
+logger.addHandler(file_handler)
+logger.propagate = False
+
+#==============================================================================
+PATH = os.path.join('..', 'remove_outlier_data')
 
 KEY = 'card_id'
 
@@ -121,13 +135,14 @@ for e, (pca_train, pca_test) in enumerate(zip(pca_train_values, pca_test_values)
 del df
 gc.collect()
 
-col_to_use += [
-    'feature_1',
-    'feature_2',
-    'elapsed_time',
-    'feature_1_outliers_mean',
-    'feature_1_outliers_sum',
+col_to_use = [
+    'feature_1', 
+    'feature_2', 
+    'elapsed_time', 
+    'feature_1_outliers_mean', 
+    'feature_1_outliers_sum', 
     'feature_2_outliers_mean',
+    'feature_2_outliers_sum',
     'hist_subsector_id_nunique',
     'hist_year_nunique',
     'hist_month_nunique',
@@ -149,7 +164,6 @@ col_to_use += [
     'hist_installments_sum',
     'hist_installments_max',
     'feature_3',
-    'feature_2_outliers_sum',
     'hist_merchant_id_nunique',
     'hist_purchase_amount_skew',
     'hist_purchase_date_max',
@@ -224,12 +238,15 @@ col_to_use += [
     'new_Black_Friday_2017_mean',
     'new_category_2_1_mean',
     'new_category_2_2_sum',
-    'new_category_2_2_mean'
+    'new_category_2_2_mean',
 ]
 
-# ========= ====================================================================
+X = train[col_to_use]
+X_test = test[col_to_use]
+
+# ========= ===================================================================
 # cv
-# ==============================================================================
+# =============================================================================
 folds = KFold(n_splits=NFOLD, shuffle=True, random_state=SEED)
 
 oof = np.zeros(len(X))
@@ -282,16 +299,30 @@ for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
     
     prediction += y_pred / folds.n_splits   
 
-np.save(os.path.join('stacking', 'oof_xgb'), oof)
-np.save(os.path.join('stacking', 'prediction_xgb'), prediction)
+
+np.save(os.path.join('stacking', '{}_oof_lgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), oof)
+np.save(os.path.join('stacking', '{}_prediction_lgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), prediction)
 
 print('shape:', X.shape)
-print('CV mean score: {0:.4f}, std: {1:.4f}.'.format(np.mean(scores), np.std(scores)))
+print('CV {0:} mean score: {1:.4f}, std: {2:.4f}, max: {3:.4f}, min: {4:.4f}.'.format(NFOLD, np.mean(scores), np.std(scores), np.max(scores), np.min(scores)))
 print(features)
+
+logger.info('''
+# ============================================================================= 
+# SUMMARY                                                     
+# =============================================================================
+''')
+logger.info('shape: {}'.format(X.shape))
+logger.info('CV {0:} mean score: {1:.4f}, std: {2:.4f}, max: {3:.4f}, min: {4:.4f}.'.format(NFOLD, np.mean(scores), np.std(scores), np.max(scores), np.min(scores)))
+logger.info('{}'.format(features))
+logger.info('''
+# ============================================================================= 
+# END                                              
+# =============================================================================
+''')
 
 submission = pd.read_csv(os.path.join('..', 'input', 'sample_submission.csv'))
 submission['target'] = prediction
-submission.to_csv(os.path.join('..', 'submission', 'xgboost_{}.csv'.format(str(date.today()).replace('-', ''))), index=False)
-
+submission.to_csv(os.path.join('..', 'submission', 'lightgbm_outlier_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
 #==============================================================================
 utils.end(__file__)
