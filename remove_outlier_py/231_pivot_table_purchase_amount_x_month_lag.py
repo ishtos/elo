@@ -24,38 +24,36 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f132'
+PREF = 'f231'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
+stats = ['min', 'max', 'mean', 'var']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
-historical_transactions['installments'] = historical_transactions['installments'].astype(int)
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
+# new_merchant_transactions['purchase_amount'] = np.log1p(new_merchant_transactions['purchase_amount'] - new_merchant_transactions['purchase_amount'].min())
+new_merchant_transactions['purchase_amount'] = np.round(new_merchant_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
 
 # =============================================================================
 #
 # =============================================================================
 
-
 def aggregate(args):
     prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
 
-    pt = historical_transactions.pivot_table(
-        index=index,
-        columns=columns,
-        values=values,
-        aggfunc=['mean'])
-
-    pt = pt.fillna(0).reset_index()
-    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_').replace('-', '') for c in pt.columns]
+    pt = new_merchant_transactions.pivot_table(
+            index=index,
+            columns=columns,
+            values=values,
+            aggfunc=stats).reset_index()
+    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_') for c in pt.columns]
     pt = pt.add_prefix(prefix)
     pt = pt.rename(columns={prefix+KEY: KEY})
 
@@ -63,17 +61,16 @@ def aggregate(args):
 
     return
 
-
 # =============================================================================
 #
 # =============================================================================
 if __name__ == '__main__':
     argss = [
-        {
-            'prefix': 'hist_',
+        { 
+            'prefix': 'new_',
             'index': 'card_id',
             'columns': 'month_lag',
-            'values': ['installments']
+            'values': ['purchase_amount']
         }
     ]
 

@@ -24,13 +24,13 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f231'
+PREF = 'f233'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
+stats = ['min', 'max', 'mean']
 
 # =============================================================================
 #
@@ -38,45 +38,32 @@ stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
+new_merchant_transactions['installments'].replace(-1, np.nan, inplace=True)
+new_merchant_transactions['installments'].replace(999, np.nan, inplace=True)
+
+new_merchant_transactions['purchase_amount'] = np.round(new_merchant_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
 
 # =============================================================================
 #
 # =============================================================================
 
+
 def aggregate(args):
     prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
 
     pt = new_merchant_transactions.pivot_table(
-        index=index,
-        columns=columns,
-        values=values,
-        aggfunc=['sum', 'count'])
-
-    pt = pt.fillna(0).reset_index()
-    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_').replace('-', '') for c in pt.columns]
+            index=index,
+            columns=columns,
+            values=values,
+            aggfunc=stats).reset_index()
+    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_') for c in pt.columns]
     pt = pt.add_prefix(prefix)
-    pt = pt.rename(columns={prefix+KEY:KEY})
+    pt = pt.rename(columns={prefix+KEY: KEY})
 
-    use_cols = ['card_id']
-
-    cols = ['new_sum_purchase_amount_1', 'new_sum_purchase_amount_2']
-    cumsum_cols = []
-    for e, c in enumerate(cols):
-        cumsum_cols.append(c)
-        pt['new_cumusum_sum_purchase_amount' + str(e)] = pt[cumsum_cols].apply(np.sum, axis=1)
-        use_cols.append('new_cumusum_sum_purchase_amount'+str(e))
-
-    cols = ['new_count_purchase_amount_1', 'new_count_purchase_amount_2']
-    cumsum_cols = []
-    for e, c in enumerate(cols):
-        cumsum_cols.append(c)
-        pt['new_cumsum_count_purchase_amount' + str(e)] = pt[cumsum_cols].apply(np.sum, axis=1)
-        use_cols.append('new_cumsum_count_purchase_amount'+str(e))
-
-    pt = pt[use_cols]
     pt.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
+
 
 # =============================================================================
 #
@@ -86,7 +73,7 @@ if __name__ == '__main__':
         {
             'prefix': 'new_',
             'index': 'card_id',
-            'columns': 'month_lag',
+            'columns': 'installments',
             'values': ['purchase_amount']
         }
     ]

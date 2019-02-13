@@ -37,11 +37,9 @@ new_merchant_transactions = pd.read_csv('../input/new_merchant_transactions.csv'
 # =============================================================================
 # new_merchant_transactions['purchase_amount'] = new_merchant_transactions['purchase_amount'].apply(lambda x: min(x, 0.8))
 
-new_merchant_transactions['category_2'].fillna(1.0,inplace=True)
-new_merchant_transactions['category_3'].fillna('A',inplace=True)
-new_merchant_transactions['merchant_id'].fillna('M_ID_00a6ca8a8a',inplace=True)
-new_merchant_transactions['installments'].replace(-1, np.nan,inplace=True)
-new_merchant_transactions['installments'].replace(999, np.nan,inplace=True)
+new_merchant_transactions['category_2'].fillna(1.0, inplace=True)
+new_merchant_transactions['category_3'].fillna('A', inplace=True)
+new_merchant_transactions['merchant_id'].fillna('M_ID_00a6ca8a8a', inplace=True)
 
 new_merchant_transactions['authorized_flag'] = new_merchant_transactions['authorized_flag'].map({'Y': 1, 'N': 0}).astype(int)
 new_merchant_transactions['category_1'] = new_merchant_transactions['category_1'].map({'Y': 1, 'N': 0}).astype(int)

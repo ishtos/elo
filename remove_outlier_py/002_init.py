@@ -55,7 +55,7 @@ gc.collect()
 df['first_active_month'] = pd.to_datetime(df['first_active_month'])
 
 # df['quarter'] = df['first_active_month'].dt.quarter
-df['elapsed_time'] = (datetime.date(2018, 4, 30) - df['first_active_month'].dt.date).dt.days
+df['elapsed_time'] = (datetime.date(2018, 5, 1) - df['first_active_month'].dt.date).dt.days
 
 # df['days_feature1'] = df['elapsed_time'] * df['feature_1']
 # df['days_feature2'] = df['elapsed_time'] * df['feature_2']

@@ -24,21 +24,30 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f132'
+PREF = 'f134'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
+stats = 'count'
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
-historical_transactions['installments'] = historical_transactions['installments'].astype(int)
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['purchase_date', 'card_id'])
+
+grouped = historical_transactions.groupby('card_id')['purchase_date'].min().reset_index()
+grouped.rename(columns={'purchase_date': 'purchase_date_min'}, inplace=True)
+
+historical_transactions = pd.merge(historical_transactions, grouped, on='card_id', how='left')
+historical_transactions['purchase_date'] = pd.to_datetime(historical_transactions['purchase_date'])
+historical_transactions['purchase_date_min'] = pd.to_datetime(historical_transactions['purchase_date_min'])
+historical_transactions['days'] = (historical_transactions['purchase_date'].dt.date - historical_transactions['purchase_date_min'].dt.date).dt.days
+historical_transactions['round_days'] = (np.ceil(historical_transactions['days'] // 10) * 10).astype(int)
+historical_transactions['agg_flag'] = 1
 
 # =============================================================================
 #
@@ -49,13 +58,11 @@ def aggregate(args):
     prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
 
     pt = historical_transactions.pivot_table(
-        index=index,
-        columns=columns,
-        values=values,
-        aggfunc=['mean'])
-
-    pt = pt.fillna(0).reset_index()
-    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_').replace('-', '') for c in pt.columns]
+            index=index,
+            columns=columns,
+            values=values,
+            aggfunc=stats).reset_index()
+    pt.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in pt.columns]
     pt = pt.add_prefix(prefix)
     pt = pt.rename(columns={prefix+KEY: KEY})
 
@@ -72,8 +79,8 @@ if __name__ == '__main__':
         {
             'prefix': 'hist_',
             'index': 'card_id',
-            'columns': 'month_lag',
-            'values': ['installments']
+            'columns': ['round_days'],
+            'values': ['agg_flag']
         }
     ]
 

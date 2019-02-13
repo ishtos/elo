@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec 14 2018
+Created on Fri Dec 18 2018
 
 @author: toshiki.ishikawa
 """
@@ -24,11 +24,13 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f203'
+PREF = 'f206'
+
+SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['mean']
+stats = ['sum', 'mean', 'std']
 
 # os.system(f'rm ../feature/{PREF}_train.pkl')
 # os.system(f'rm ../feature/{PREF}_test.pkl')
@@ -38,24 +40,19 @@ stats = ['mean']
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-# train = pd.read_csv(os.path.join(PATH, 'train.csv.gz'))[[KEY]]
-# test = pd.read_csv(os.path.join(PATH, 'test.csv.gz'))[[KEY]]
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'installments'])
+new_merchant_transactions = utils.reduce_mem_usage(new_merchant_transactions)
 
 
-PATH = os.path.join('..', 'remove_outlier_data')
+new_merchant_transactions['-1_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
+new_merchant_transactions['999_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
+new_merchant_transactions['exception_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
 
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
-new_merchant_transactions['purchase_date'] = pd.to_datetime(new_merchant_transactions['purchase_date'])
-
-RANGE = 30
-new_merchant_transactions['fathers_day_2017'] = (pd.to_datetime('2017-08-13') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Children_day_2017'] = (pd.to_datetime('2017-10-12') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Black_Friday_2017'] = (pd.to_datetime('2017-11-24') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Christmas_Day_2017'] = (pd.to_datetime('2017-12-25') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
 
 # =============================================================================
 #
 # =============================================================================
+
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
@@ -64,25 +61,24 @@ def aggregate(args):
     agg.reset_index(inplace=True)
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
-    return 
+    return
 
 # =============================================================================
 #
 # =============================================================================
 if __name__ == '__main__':
     argss = [
-        {   
-            'prefix': 'new_', 
+        {
+            'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                'fathers_day_2017': stats,
-                'Children_day_2017': stats,
-                'Black_Friday_2017': stats, 
-                'Christmas_Day_2017': stats,
+                '-1_installments': stats,
+                '999_installments': stats, 
+                'exception_installments': stats,
             }
         }
     ]
-    
+
     pool = Pool(NTHREAD)
     callback = pool.map(aggregate, argss)
     pool.close()

@@ -31,22 +31,24 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f205'
+PREF = 'f108'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum','mean','max','min','std', 'median','skew', 'kurt','iqr']
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'category_2', 'category_3'])
-new_merchant_transactions['category_2'] = new_merchant_transactions['category_2'].astype(int)
-new_merchant_transactions = pd.get_dummies(new_merchant_transactions, columns=['category_2', 'category_3'])
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'city_id', 'merchant_category_id', 'subsector_id'])
+new_merchant_transactions['city_minus_one'] = new_merchant_transactions['city_id'].apply(lambda x: np.where(x == -1, 1, 0))
+new_merchant_transactions['merchant_category_minus_one'] =  new_merchant_transactions['merchant_category_id'].apply(lambda x: np.where(x == -1, 1, 0))
+new_merchant_transactions['subsector_minus_one'] = new_merchant_transactions['subsector_id'].apply(lambda x: np.where(x == -1, 1, 0))
+
 
 # =============================================================================
 #
@@ -70,14 +72,9 @@ if __name__ == '__main__':
             'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                'category_2_1': ['sum'], # ['sum', 'mean'], 
-                'category_2_2': ['sum'], # ['sum', 'mean'],  
-                'category_2_3': ['sum'], # ['sum', 'mean'], 
-                'category_2_4': ['sum'], # ['sum', 'mean'],
-                'category_2_5': ['sum'], # ['sum', 'mean'], 
-                'category_3_0': ['sum'], # ['sum', 'mean'],
-                'category_3_1': ['sum'], # ['sum', 'mean'], 
-                'category_3_2': ['sum'], # ['sum', 'mean']
+                'city_minus_one': stats,
+                'merchant_category_minus_one': stats,
+                'subsector_minus_one': stats,
             }
         }
     ]
@@ -88,9 +85,4 @@ if __name__ == '__main__':
 
 #==============================================================================
 utils.end(__file__)
-
-
-
-
-
 

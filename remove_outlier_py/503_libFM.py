@@ -67,18 +67,18 @@ def build_model_1(X, fsize):
 # =============================================================================
 # features
 # =============================================================================
-features = []
+# features = []
 
-features += [f'f10{i}.pkl' for i in (2, )]
-features += [f'f11{i}_{j}.pkl' for i in (1, 2)
-             for j in ('Y', 'N')]
-features += [f'f12{i}.pkl' for i in (1, 2)]
-features += [f'f13{i}.pkl' for i in (1, 2)]
+# features += [f'f10{i}.pkl' for i in (2, )]
+# features += [f'f11{i}_{j}.pkl' for i in (1, 2)
+#              for j in ('Y', 'N')]
+# features += [f'f12{i}.pkl' for i in (1, 2)]
+# features += [f'f13{i}.pkl' for i in (1, 2)]
 
-features += [f'f20{i}.pkl' for i in (2, 3)]
-features += [f'f21{i}_{j}.pkl' for i in (1, 2)
-             for j in ('Y', 'N')]
-features += [f'f23{i}.pkl' for i in (1, 2)]
+# features += [f'f20{i}.pkl' for i in (2, 3)]
+# features += [f'f21{i}_{j}.pkl' for i in (1, 2)
+#              for j in ('Y', 'N')]
+# features += [f'f23{i}.pkl' for i in (1, 2)]
 
 # features += [f'f40{i}.pkl' for i in (2, 3)]
 # features += [f'f41{i}_{j}.pkl' for i in (1, 2)

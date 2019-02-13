@@ -30,7 +30,7 @@ SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
+stats = ['min', 'max', 'mean', 'var']
 
 # =============================================================================
 #
@@ -38,59 +38,25 @@ stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
 PATH = os.path.join('..', 'remove_outlier_data')
 
 historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
+# historical_transactions['purchase_amount'] = np.log1p(historical_transactions['purchase_amount'] - historical_transactions['purchase_amount'].min())
+historical_transactions['purchase_amount'] = np.round(historical_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
 
 # =============================================================================
 #
 # =============================================================================
 
-
 def aggregate(args):
     prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
 
     pt = historical_transactions.pivot_table(
-        index=index,
-        columns=columns,
-        values=values,
-        aggfunc=['sum', 'count'])
-
-    pt = pt.fillna(0).reset_index()
-    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_').replace('-', '') for c in pt.columns]
+            index=index,
+            columns=columns,
+            values=values,
+            aggfunc=stats).reset_index()
+    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_') for c in pt.columns]
     pt = pt.add_prefix(prefix)
     pt = pt.rename(columns={prefix+KEY: KEY})
 
-    use_cols = ['card_id']
-    
-    cols = [
-        'hist_sum_purchase_amount_13', 'hist_sum_purchase_amount_12',
-        'hist_sum_purchase_amount_11', 'hist_sum_purchase_amount_10',
-        'hist_sum_purchase_amount_9', 'hist_sum_purchase_amount_8',
-        'hist_sum_purchase_amount_7', 'hist_sum_purchase_amount_6',
-        'hist_sum_purchase_amount_5', 'hist_sum_purchase_amount_4',
-        'hist_sum_purchase_amount_3', 'hist_sum_purchase_amount_2',
-        'hist_sum_purchase_amount_1', 'hist_sum_purchase_amount_0',
-    ]
-    cumsum_cols = []
-    for e, c in enumerate(cols):
-        cumsum_cols.append(c)
-        pt['hist_cumusum_sum_purchase_amount' + str(e)] = pt[cumsum_cols].apply(np.sum, axis=1)
-        use_cols.append('hist_cumusum_sum_purchase_amount'+str(e))
-
-    cols = [
-        'hist_count_purchase_amount_13', 'hist_count_purchase_amount_12',
-        'hist_count_purchase_amount_11', 'hist_count_purchase_amount_10',
-        'hist_count_purchase_amount_9', 'hist_count_purchase_amount_8',
-        'hist_count_purchase_amount_7', 'hist_count_purchase_amount_6',
-        'hist_count_purchase_amount_5', 'hist_count_purchase_amount_4',
-        'hist_count_purchase_amount_3', 'hist_count_purchase_amount_2',
-        'hist_count_purchase_amount_1', 'hist_count_purchase_amount_0'
-    ]
-    cumsum_cols = []
-    for e, c in enumerate(cols):
-        cumsum_cols.append(c)
-        pt['hist_cumsum_count_purchase_amount' + str(e)] = pt[cumsum_cols].apply(np.sum, axis=1)
-        use_cols.append('hist_cumsum_count_purchase_amount'+str(e))
-
-    pt = pt[use_cols]
     pt.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return

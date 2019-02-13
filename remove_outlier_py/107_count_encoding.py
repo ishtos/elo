@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Dec 14 2018
-
 @author: toshiki.ishikawa
 """
 
@@ -10,12 +9,11 @@ import os
 import sys
 import gc
 import utils
+import datetime
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-# from datetime import datetime, date
-import datetime
 from sklearn.preprocessing import LabelEncoder
 from multiprocessing import cpu_count, Pool
 
@@ -24,56 +22,59 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f132'
+PREF = 'f107'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['min', 'max', 'mean', 'median', 'std', 'var', 'skew']
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
-historical_transactions['installments'] = historical_transactions['installments'].astype(int)
+categorical_columns = ['city_id', 'merchant_category_id', 'merchant_id', 'state_id', 'subsector_id']
+
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=categorical_columns+['card_id'])
+historical_transactions['agg_flag'] = 1
+
+for c in categorical_columns:
+    count_rank = historical_transactions.groupby(c)['agg_flag'].count().rank(ascending=False)
+    historical_transactions[c + '_count'] = historical_transactions[c].map(count_rank)
+
+historical_transactions = utils.reduce_mem_usage(historical_transactions)
 
 # =============================================================================
 #
 # =============================================================================
 
-
 def aggregate(args):
-    prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
+    prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    pt = historical_transactions.pivot_table(
-        index=index,
-        columns=columns,
-        values=values,
-        aggfunc=['mean'])
-
-    pt = pt.fillna(0).reset_index()
-    pt.columns = [f'{c[0]}_{c[1]}_{c[2]}'.strip('_').replace('-', '') for c in pt.columns]
-    pt = pt.add_prefix(prefix)
-    pt = pt.rename(columns={prefix+KEY: KEY})
-
-    pt.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
+    agg = historical_transactions.groupby(key).agg(num_aggregations)
+    agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
+    agg.reset_index(inplace=True)
+    agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
-
 
 # =============================================================================
 #
 # =============================================================================
 if __name__ == '__main__':
     argss = [
-        {
+        {   
             'prefix': 'hist_',
-            'index': 'card_id',
-            'columns': 'month_lag',
-            'values': ['installments']
+            'key': 'card_id',
+            'num_aggregations': {
+                'city_id_count': stats,
+                'merchant_category_id_count': stats,
+                'merchant_id_count': stats,
+                'state_id_count': stats,
+                'subsector_id_count': stats,
+            }
         }
     ]
 

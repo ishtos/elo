@@ -10,48 +10,43 @@ import os
 import sys
 import gc
 import utils
+import warnings
+import random
+import glob
+import datetime
+
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-# from datetime import datetime, date
-import datetime
+from attrdict import AttrDict
+from sklearn.externals import joblib
 from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
 from multiprocessing import cpu_count, Pool
-
+from functools import reduce, partial
+from scipy.stats import skew, kurtosis, iqr
 
 utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f203'
+PREF = 'f204'
+
+SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['mean']
-
-# os.system(f'rm ../feature/{PREF}_train.pkl')
-# os.system(f'rm ../feature/{PREF}_test.pkl')
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-# train = pd.read_csv(os.path.join(PATH, 'train.csv.gz'))[[KEY]]
-# test = pd.read_csv(os.path.join(PATH, 'test.csv.gz'))[[KEY]]
-
-
-PATH = os.path.join('..', 'remove_outlier_data')
-
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
-new_merchant_transactions['purchase_date'] = pd.to_datetime(new_merchant_transactions['purchase_date'])
-
-RANGE = 30
-new_merchant_transactions['fathers_day_2017'] = (pd.to_datetime('2017-08-13') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Children_day_2017'] = (pd.to_datetime('2017-10-12') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Black_Friday_2017'] = (pd.to_datetime('2017-11-24') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Christmas_Day_2017'] = (pd.to_datetime('2017-12-25') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'category_2', 'category_3'])
+new_merchant_transactions['category_2'] = new_merchant_transactions['category_2'].astype(int)
+new_merchant_transactions = pd.get_dummies(new_merchant_transactions, columns=['category_2', 'category_3'])
 
 # =============================================================================
 #
@@ -64,7 +59,7 @@ def aggregate(args):
     agg.reset_index(inplace=True)
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
-    return 
+    return
 
 # =============================================================================
 #
@@ -72,20 +67,30 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {   
-            'prefix': 'new_', 
+            'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                'fathers_day_2017': stats,
-                'Children_day_2017': stats,
-                'Black_Friday_2017': stats, 
-                'Christmas_Day_2017': stats,
+                'category_2_1': stats,
+                'category_2_2': stats, 
+                'category_2_3': stats,
+                'category_2_4': stats, 
+                'category_2_5': stats, 
+                'category_3_0': stats,
+                'category_3_1': stats,
+                'category_3_2': stats,
             }
         }
     ]
-    
+
     pool = Pool(NTHREAD)
     callback = pool.map(aggregate, argss)
     pool.close()
 
 #==============================================================================
 utils.end(__file__)
+
+
+
+
+
+

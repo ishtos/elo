@@ -10,53 +10,49 @@ import os
 import sys
 import gc
 import utils
-import warnings
-import random
-import glob
 import datetime
-
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-from attrdict import AttrDict
-from sklearn.externals import joblib
 from sklearn.preprocessing import LabelEncoder
-from sklearn.linear_model import LinearRegression
 from multiprocessing import cpu_count, Pool
-from functools import reduce, partial
-from scipy.stats import skew, kurtosis, iqr
+
 
 utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f107'
+PREF = 'f106'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum','mean','max','min','std', 'median','skew', 'kurt','iqr']
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'category_2', 'category_3'])
-historical_transactions['category_2'] = historical_transactions['category_2'].astype(int)
-historical_transactions = pd.get_dummies(historical_transactions, columns=['category_2', 'category_3'])
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'installments'])
+historical_transactions = utils.reduce_mem_usage(historical_transactions)
+
+historical_transactions['-1_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
+historical_transactions['999_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
+historical_transactions['exception_installments'] = historical_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
 
 # =============================================================================
 #
 # =============================================================================
+
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
     agg = historical_transactions.groupby(key).agg(num_aggregations)
     agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
-    agg.reset_index(inplace=True)
+    agg.reset_index(inplace = True)
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
     return
@@ -70,14 +66,9 @@ if __name__ == '__main__':
             'prefix': 'hist_',
             'key': 'card_id',
             'num_aggregations': {
-                'category_2_1': ['sum'], # ['sum', 'mean'], 
-                'category_2_2': ['sum'], # ['sum', 'mean'],  
-                'category_2_3': ['sum'], # ['sum', 'mean'], 
-                'category_2_4': ['sum'], # ['sum', 'mean'],
-                'category_2_5': ['sum'], # ['sum', 'mean'], 
-                'category_3_0': ['sum'], # ['sum', 'mean'],
-                'category_3_1': ['sum'], # ['sum', 'mean'], 
-                'category_3_2': ['sum'], # ['sum', 'mean']
+                '-1_installments': stats,
+                '999_installments': stats, 
+                'exception_installments': stats,
             }
         }
     ]
@@ -88,9 +79,3 @@ if __name__ == '__main__':
 
 #==============================================================================
 utils.end(__file__)
-
-
-
-
-
-

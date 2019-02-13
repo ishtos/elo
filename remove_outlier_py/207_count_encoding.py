@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Dec 14 2018
-
 @author: toshiki.ishikawa
 """
 
@@ -10,12 +9,11 @@ import os
 import sys
 import gc
 import utils
+import datetime
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-# from datetime import datetime, date
-import datetime
 from sklearn.preprocessing import LabelEncoder
 from multiprocessing import cpu_count, Pool
 
@@ -24,38 +22,34 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f203'
+PREF = 'f207'
+
+SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['mean']
-
-# os.system(f'rm ../feature/{PREF}_train.pkl')
-# os.system(f'rm ../feature/{PREF}_test.pkl')
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-# train = pd.read_csv(os.path.join(PATH, 'train.csv.gz'))[[KEY]]
-# test = pd.read_csv(os.path.join(PATH, 'test.csv.gz'))[[KEY]]
+categorical_columns = ['city_id', 'merchant_category_id', 'merchant_id', 'state_id', 'subsector_id']
 
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=categorical_columns+['card_id'])
+new_merchant_transactions['agg_flag'] = 1
 
-PATH = os.path.join('..', 'remove_outlier_data')
+for c in categorical_columns:
+    count_rank = new_merchant_transactions.groupby(c)['agg_flag'].count().rank(ascending=False)
+    new_merchant_transactions[c + '_count'] = new_merchant_transactions[c].map(count_rank)
 
-new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'))
-new_merchant_transactions['purchase_date'] = pd.to_datetime(new_merchant_transactions['purchase_date'])
-
-RANGE = 30
-new_merchant_transactions['fathers_day_2017'] = (pd.to_datetime('2017-08-13') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Children_day_2017'] = (pd.to_datetime('2017-10-12') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Black_Friday_2017'] = (pd.to_datetime('2017-11-24') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
-new_merchant_transactions['Christmas_Day_2017'] = (pd.to_datetime('2017-12-25') - new_merchant_transactions['purchase_date']).dt.days.apply(lambda x: 1 if x >= 0 and x <= RANGE else 0)
+new_merchant_transactions = utils.reduce_mem_usage(new_merchant_transactions)
 
 # =============================================================================
 #
 # =============================================================================
+
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
@@ -64,7 +58,7 @@ def aggregate(args):
     agg.reset_index(inplace=True)
     agg.to_pickle(f'../remove_outlier_feature/{PREF}.pkl')
 
-    return 
+    return
 
 # =============================================================================
 #
@@ -72,17 +66,18 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {   
-            'prefix': 'new_', 
+            'prefix': 'new_',
             'key': 'card_id',
             'num_aggregations': {
-                'fathers_day_2017': stats,
-                'Children_day_2017': stats,
-                'Black_Friday_2017': stats, 
-                'Christmas_Day_2017': stats,
+                'city_id_count': stats,
+                'merchant_category_id_count': stats,
+                'merchant_id_count': stats,
+                'state_id_count': stats,
+                'subsector_id_count': stats,
             }
         }
     ]
-    
+
     pool = Pool(NTHREAD)
     callback = pool.map(aggregate, argss)
     pool.close()
