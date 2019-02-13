@@ -244,6 +244,9 @@ col_to_use = [
 X = train[col_to_use]
 X_test = test[col_to_use]
 
+for i, j in zip(X.columns, X.dtypes):
+    print(i, j)
+
 # ========= ===================================================================
 # cv
 # =============================================================================
@@ -261,6 +264,7 @@ for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
     dvalid = xgb.DMatrix(data=X.iloc[valid_index], label=y.iloc[valid_index])
 
     params = {
+        'gpu_id': 0, 
         'objective': 'reg:linear', 
         'eval_metric': 'rmse', 
         'silent': True, 

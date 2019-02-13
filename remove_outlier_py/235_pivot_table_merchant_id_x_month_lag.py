@@ -24,24 +24,20 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f133'
+PREF = 'f235'
 
 SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['sum']
+stats = ['count']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'remove_outlier_data')
 
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'))
-historical_transactions['installments'].replace(-1, np.nan, inplace=True)
-historical_transactions['installments'].replace(999, np.nan, inplace=True)
-
-historical_transactions['purchase_amount'] = np.round(historical_transactions['purchase_amount'] / 0.00150265118 + 497.06,2)
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'month_lag', 'merchant_id'])
 
 # =============================================================================
 #
@@ -51,7 +47,7 @@ historical_transactions['purchase_amount'] = np.round(historical_transactions['p
 def aggregate(args):
     prefix, index, columns, values = args['prefix'], args['index'], args['columns'], args['values']
 
-    pt = historical_transactions.pivot_table(
+    pt = new_merchant_transactions.pivot_table(
             index=index,
             columns=columns,
             values=values,
@@ -71,10 +67,10 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {
-            'prefix': 'hist_',
+            'prefix': 'new_',
             'index': 'card_id',
-            'columns': 'installments',
-            'values': ['purchase_amount']
+            'columns': 'month_lag',
+            'values': ['merchant_id']
         }
     ]
 
