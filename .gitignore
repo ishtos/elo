@@ -115,7 +115,7 @@ output/
 
 # feature
 feature/
-remove_outlier_feature
+remove_outlier_feature/
 
 # .vscode
 .vscode/
