@@ -67,7 +67,7 @@ features += [f'f11{i}_{j}.pkl' for i in (1,)
                                for j in ('Y', 'N')]
 features += [f'f13{i}.pkl' for i in (1, 3, 4)]
 
-features += [f'f20{i}.pkl' for i in (2, 3, 4, 5, 6, 7)]
+features += [f'f20{i}.pkl' for i in (2, 3, 4, 5, 6, 7, 8)]
 # features += [f'f23{i}.pkl' for i in (1, 3)]
 
 features += [f'f30{i}.pkl' for i in (2, )]
@@ -271,7 +271,7 @@ for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
         'booster': 'gbtree', 
         'n_jobs': 4, 
         'n_estimators': 2500, 
-        'tree_method': 'gpu_hist', 
+        'tree_method': 'hist', 
         'grow_policy': 'lossguide', 
         'max_depth': 12, 
         'seed': int(2**fold_n), 
@@ -304,8 +304,8 @@ for fold_n, (train_index, valid_index) in enumerate(folds.split(X)):
     prediction += y_pred / folds.n_splits   
 
 
-np.save(os.path.join('stacking', '{}_oof_lgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), oof)
-np.save(os.path.join('stacking', '{}_prediction_lgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), prediction)
+np.save(os.path.join('stacking', '{}_oof_xgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), oof)
+np.save(os.path.join('stacking', '{}_prediction_xgb'.format(str(datetime.datetime.today().date()).replace('-', ''))), prediction)
 
 print('shape:', X.shape)
 print('CV {0:} mean score: {1:.4f}, std: {2:.4f}, max: {3:.4f}, min: {4:.4f}.'.format(NFOLD, np.mean(scores), np.std(scores), np.max(scores), np.min(scores)))
@@ -327,6 +327,6 @@ logger.info('''
 
 submission = pd.read_csv(os.path.join('..', 'input', 'sample_submission.csv'))
 submission['target'] = prediction
-submission.to_csv(os.path.join('..', 'submission', 'lightgbm_outlier_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
+submission.to_csv(os.path.join('..', 'submission', 'xgboost_outlier_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
 #==============================================================================
 utils.end(__file__)
