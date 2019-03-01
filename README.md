@@ -1,7 +1,6 @@
 # Elo 167th Solution
+Description: https://www.kaggle.com/c/elo-merchant-category-recommendation
 Leader Board: https://www.kaggle.com/c/elo-merchant-category-recommendation/leaderboard
-
-https://www.kaggle.com/c/elo-merchant-category-recommendation
 
 # run
 ```python
