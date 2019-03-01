@@ -105,7 +105,6 @@ venv.bak/
 
 # data
 data/
-remove_outlier_data
 
 # input/
 input/
@@ -115,7 +114,6 @@ output/
 
 # feature
 feature/
-remove_outlier_feature/
 
 # .vscode
 .vscode/
@@ -125,13 +123,3 @@ submission/
 
 # weights
 py/weights/
-
-# remove_outlier_py/
-remove_outlier_py/ffm/
-remove_outlier_py/IMP_csv/
-remove_outlier_py/IMP_png/
-remove_outlier_py/stacking/
-remove_outlier_py/weights/
-remove_outlier_py/.DS_Store
-
-
