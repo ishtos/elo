@@ -39,7 +39,7 @@ from logging import getLogger, FileHandler, Formatter, DEBUG
 logger = getLogger(__name__)
 logger.setLevel(DEBUG)
 
-file_handler = FileHandler('log_outlier_{}'.format(str(datetime.datetime.today().date()).replace('-', '')))
+file_handler = FileHandler(os.path.join('logs', 'log_{}'.format(str(datetime.datetime.today().date()).replace('-', ''))))
 formatter = Formatter('%(message)s')
 file_handler.setFormatter(formatter)
 file_handler.setLevel(DEBUG)
@@ -126,44 +126,9 @@ date_features = [
 for f in date_features:
     df[f] = df[f].astype(np.int64) * 1e-9
 
-# df['card_id_total'] = df['new_card_id_size'] + df['hist_card_id_size']
-# df['card_id_cnt_total'] = df['new_card_id_count'] + df['hist_card_id_count']
-# df['card_id_cnt_ratio'] = df['new_card_id_count'] / df['hist_card_id_count']
-# df['purchase_amount_total'] = df['new_purchase_amount_sum'] + df['hist_purchase_amount_sum']
-# df['purchase_amount_mean'] = df['new_purchase_amount_mean'] + df['hist_purchase_amount_mean']
-# df['purchase_amount_max'] = df['new_purchase_amount_max'] + df['hist_purchase_amount_max']
-# df['purchase_amount_min'] = df['new_purchase_amount_min'] + df['hist_purchase_amount_min']
-# df['purchase_amount_ratio'] = df['new_purchase_amount_sum'] / df['hist_purchase_amount_sum']
-# df['month_diff_min'] = df['new_month_diff_min'] + df['hist_month_diff_min']
-# df['month_diff_mean'] = df['new_month_diff_mean'] + df['hist_month_diff_mean']
-# df['month_diff_ratio'] = df['new_month_diff_mean'] / df['hist_month_diff_mean']
-# df['month_lag_mean'] = df['new_month_lag_mean'] + df['hist_month_lag_mean']
-# df['month_lag_min'] = df['new_month_lag_min'] + df['hist_month_lag_min']
-# df['category_1_mean'] = df['new_category_1_mean'] + df['hist_category_1_mean']
-# df['installments_total'] = df['new_installments_sum'] + df['hist_installments_sum']
-# df['installments_mean'] = df['new_installments_mean'] + df['hist_installments_mean']
-# df['installments_min'] = df['new_installments_min'] + df['hist_installments_min']
-# df['installments_ratio'] = df['new_installments_sum'] / df['hist_installments_sum']
-# df['price_total'] = df['purchase_amount_total'] / df['installments_total']
-# df['price_mean'] = df['purchase_amount_mean'] / df['installments_mean']
-# df['price_min'] = df['purchase_amount_min'] / df['installments_min']
-# df['duration_mean'] = df['new_duration_mean'] + df['hist_duration_mean']
-# df['duration_min'] = df['new_duration_min'] + df['hist_duration_min']
-# df['duration_max'] = df['new_duration_max'] + df['hist_duration_max']
-# df['amount_month_ratio_mean'] = df['new_amount_month_ratio_mean'] + df['hist_amount_month_ratio_mean']
-# df['amount_month_ratio_min'] = df['new_amount_month_ratio_min'] + df['hist_amount_month_ratio_min']
-# df['amount_month_ratio_max'] = df['new_amount_month_ratio_max'] + df['hist_amount_month_ratio_max']
 df['sum_new_CLV'] = df['new_card_id_count'] * df['new_purchase_amount_sum'] / df['new_month_diff_mean']
 df['sum_hist_CLV'] = df['hist_card_id_count'] * df['hist_purchase_amount_sum'] / df['hist_month_diff_mean']
 df['sum_CLV_ratio'] = df['sum_new_CLV'] / df['sum_hist_CLV']
-
-# df['outliers_1'] = df['hist_month_nunique'].apply(lambda x: np.where(x > 3, 1, 0))
-# df['outliers_2'] = df['hist_month_diff_min'].apply(lambda x: np.where(x < 13, 1, 0))
-# df['outliers_3'] = df['hist_month_diff_max'].apply(lambda x: np.where(x < 14, 1, 0))
-# df['outliers_4'] = df['hist_month_lag_max'].apply(lambda x: np.where(x > -7, 1, 0))
-# df['outliers_5'] = df['hist_month_lag_min'].apply(lambda x: np.where(x < -2, 1, 0))
-
-# df['outliers_sum'] = df[['outliers_1', 'outliers_2', 'outliers_3', 'outliers_4', 'outliers_5']].apply(np.sum, axis=1)
 
 df['nans'] = df.isnull().sum(axis=1)
 
@@ -187,23 +152,11 @@ del df
 gc.collect()
 
 # =============================================================================
-# target encoding
-# =============================================================================
-
-# =============================================================================
-# drop same values
-# =============================================================================
-
-# =============================================================================
 # preprocess
 # =============================================================================
 y = train['target']
 
-# col_not_to_use = ['first_active_month', 'card_id', 'target', 'outliers']
-# col_to_use = [c for c in train.columns if c not in col_not_to_use]
-
 col_to_use = pd.read_csv('../ipynb/use_cols.csv')
-
 gc.collect()
 
 X = train[col_to_use]
@@ -294,7 +247,7 @@ logger.info('''
 
 submission = pd.read_csv(os.path.join('..', 'input', 'sample_submission.csv'))
 submission['target'] = prediction
-submission.to_csv(os.path.join('..', 'submission', 'lightgbm_outlier_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
+submission.to_csv(os.path.join('..', 'submission', 'lightgbm_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
 
 feature_importance['importance'] /= NFOLD
 cols = feature_importance[['feature', 'importance']].groupby('feature').mean().sort_values(by='importance', ascending=False)[:100].index

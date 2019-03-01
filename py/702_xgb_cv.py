@@ -37,7 +37,7 @@ from logging import getLogger, FileHandler, Formatter, DEBUG
 logger = getLogger(__name__)
 logger.setLevel(DEBUG)
 
-file_handler = FileHandler('log_outlier_{}'.format(str(datetime.datetime.today().date()).replace('-', '')))
+file_handler = FileHandler(os.path.join('logs', 'log_{}'.format(str(datetime.datetime.today().date()).replace('-', ''))))
 formatter = Formatter('%(message)s')
 file_handler.setFormatter(formatter)
 file_handler.setLevel(DEBUG)
@@ -327,6 +327,6 @@ logger.info('''
 
 submission = pd.read_csv(os.path.join('..', 'input', 'sample_submission.csv'))
 submission['target'] = prediction
-submission.to_csv(os.path.join('..', 'submission', 'xgboost_outlier_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
+submission.to_csv(os.path.join('..', 'submission', 'xgboost_{}.csv'.format(str(datetime.datetime.today().date()).replace('-', ''))), index=False)
 #==============================================================================
 utils.end(__file__)
