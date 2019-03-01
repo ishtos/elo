@@ -1,19 +1,19 @@
 # =============================================================================
 # 000 initializer
 # =============================================================================
-# python -u 001_preprocess.py
-# python -u 002_init.py
+python -u 001_preprocess.py
+python -u 002_init.py
 
 # =============================================================================
 # 100 historical
 # =============================================================================
-# python -u 101_init.py
+python -u 101_init.py
 
-# python -u 102_aggregate.py
-# python -u 103_aggregate_special_days.py
-# python -u 104_category.py
-# python -u 105_category_target_encoding.py
-# python -u 106_installments_exception.py
+python -u 102_aggregate.py
+python -u 103_aggregate_special_days.py
+python -u 104_category.py
+python -u 105_category_target_encoding.py
+python -u 106_installments_exception.py
 
 python -u 111_authorized_aggregate.py
 
@@ -54,20 +54,6 @@ python -u 302_merchants_score.py
 python -u 303_historical_aggregate.py
 python -u 304_new_aggregate.py
 python -u 305_unique_aggregate.py
-
-# =============================================================================
-# 400 union
-# =============================================================================
-python -u 401_init.py
-
-python -u 402_aggregate.py
-python -u 403_aggregate_per_month.py
-
-python -u 411_authorized_aggregate.py
-python -u 412_authorized_aggregate_per_month.py
-
-python -u 421_authorized_rate.py
-python -u 422_repurchase_rate.py
 
 # =============================================================================
 # 600 CV
