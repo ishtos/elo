@@ -23,11 +23,11 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f305'
+PREF = 'f303'
 
 KEY = 'card_id'
 
-stats = ['nunique', 'sum', 'mean', 'std']
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
@@ -64,20 +64,18 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {
-            'prefix': 'merchants_',
+            'prefix': 'hist_merchants_',
             'key': ['card_id'],
             'num_aggregations': {
-                'most_recent_sales_range': ['nunique'], 
-                'most_recent_purchases_range': ['nunique'], 
-                'avg_sales_lag3': stats,
-                'avg_purchases_lag3': stats,
-                'active_months_lag3': stats,
-                'avg_sales_lag6': stats,
-                'avg_purchases_lag6': stats,
-                'active_months_lag6': stats,
-                'avg_sales_lag12': stats,
-                'avg_purchases_lag12': stats,
-                'active_months_lag12': stats
+                # 'merchant_group_id': ['nunique'],
+                # 'merchant_category_id': ['nunique'],
+                # 'subsector_id': ['nunique'],
+                # 'state_id': ['nunique'],
+                'numerical_1': ['sum', 'mean'],
+                'numerical_2': ['sum', 'mean'],
+                'category_1': ['sum', 'mean'], # 0, 1
+                # 'category_2': ['mean'], # 1, 2, 3, 4, 5
+                'category_4': ['sum', 'mean'], # 0, 1
             }
         }
     ]

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec 29 2018
+Created on Fri Dec 14 2018
 
 @author: toshiki.ishikawa
 """
@@ -10,38 +10,43 @@ import os
 import sys
 import gc
 import utils
+import warnings
+import random
+import glob
+import datetime
+
 import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-from datetime import datetime, date
+from attrdict import AttrDict
+from sklearn.externals import joblib
 from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
 from multiprocessing import cpu_count, Pool
-
+from functools import reduce, partial
+from scipy.stats import skew, kurtosis, iqr
 
 utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f305'
+PREF = 'f104'
+
+SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['nunique', 'sum', 'mean', 'std']
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'data')
 
-merchants = pd.read_csv(os.path.join(PATH, 'merchants.csv'))
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'merchant_id'])
-
-merchants = merchants.drop_duplicates(subset=['merchant_id'], keep='first').reset_index(drop=True) # TODO: change first
-historical_transactions = pd.merge(historical_transactions, merchants, on='merchant_id', how='left')
-
-del merchants
-gc.collect()
+historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'category_2', 'category_3'])
+historical_transactions['category_2'] = historical_transactions['category_2'].astype(int)
+historical_transactions = pd.get_dummies(historical_transactions, columns=['category_2', 'category_3'])
 
 # =============================================================================
 #
@@ -49,11 +54,9 @@ gc.collect()
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    agg = historical_transactions.groupby(key).agg(num_aggregations).reset_index()
-    agg.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in agg.columns]
-    agg = agg.add_prefix(prefix)
-    agg = agg.rename(columns={prefix+KEY:KEY})
-
+    agg = historical_transactions.groupby(key).agg(num_aggregations)
+    agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
+    agg.reset_index(inplace=True)
     agg.to_pickle(f'../feature/{PREF}.pkl')
 
     return
@@ -63,21 +66,18 @@ def aggregate(args):
 # =============================================================================
 if __name__ == '__main__':
     argss = [
-        {
-            'prefix': 'merchants_',
-            'key': ['card_id'],
+        {   
+            'prefix': 'hist_',
+            'key': 'card_id',
             'num_aggregations': {
-                'most_recent_sales_range': ['nunique'], 
-                'most_recent_purchases_range': ['nunique'], 
-                'avg_sales_lag3': stats,
-                'avg_purchases_lag3': stats,
-                'active_months_lag3': stats,
-                'avg_sales_lag6': stats,
-                'avg_purchases_lag6': stats,
-                'active_months_lag6': stats,
-                'avg_sales_lag12': stats,
-                'avg_purchases_lag12': stats,
-                'active_months_lag12': stats
+                'category_2_1': stats,
+                'category_2_2': stats, 
+                'category_2_3': stats,
+                'category_2_4': stats, 
+                'category_2_5': stats, 
+                'category_3_0': stats,
+                'category_3_1': stats,
+                'category_3_2': stats, 
             }
         }
     ]
@@ -88,3 +88,9 @@ if __name__ == '__main__':
 
 #==============================================================================
 utils.end(__file__)
+
+
+
+
+
+

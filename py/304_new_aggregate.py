@@ -23,11 +23,11 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f305'
+PREF = 'f304'
 
 KEY = 'card_id'
 
-stats = ['nunique', 'sum', 'mean', 'std']
+stats = ['sum', 'mean', 'std']
 
 # =============================================================================
 #
@@ -35,21 +35,21 @@ stats = ['nunique', 'sum', 'mean', 'std']
 PATH = os.path.join('..', 'data')
 
 merchants = pd.read_csv(os.path.join(PATH, 'merchants.csv'))
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'merchant_id'])
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'merchant_id'])
 
 merchants = merchants.drop_duplicates(subset=['merchant_id'], keep='first').reset_index(drop=True) # TODO: change first
-historical_transactions = pd.merge(historical_transactions, merchants, on='merchant_id', how='left')
+new_merchant_transactions = pd.merge(new_merchant_transactions, merchants, on='merchant_id', how='left')
+new_merchant_transactions = new_merchant_transactions.fillna(0)
 
 del merchants
 gc.collect()
-
 # =============================================================================
 #
 # =============================================================================
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
-
-    agg = historical_transactions.groupby(key).agg(num_aggregations).reset_index()
+    
+    agg = new_merchant_transactions.groupby(key).agg(num_aggregations).reset_index()
     agg.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in agg.columns]
     agg = agg.add_prefix(prefix)
     agg = agg.rename(columns={prefix+KEY:KEY})
@@ -64,20 +64,18 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {
-            'prefix': 'merchants_',
+            'prefix': 'new_merchants_',
             'key': ['card_id'],
             'num_aggregations': {
-                'most_recent_sales_range': ['nunique'], 
-                'most_recent_purchases_range': ['nunique'], 
-                'avg_sales_lag3': stats,
-                'avg_purchases_lag3': stats,
-                'active_months_lag3': stats,
-                'avg_sales_lag6': stats,
-                'avg_purchases_lag6': stats,
-                'active_months_lag6': stats,
-                'avg_sales_lag12': stats,
-                'avg_purchases_lag12': stats,
-                'active_months_lag12': stats
+                # 'merchant_group_id': ['nunique'],
+                # 'merchant_category_id': ['nunique'],
+                # 'subsector_id': ['nunique'],
+                # 'state_id': ['nunique'],
+                'numerical_1': ['sum', 'mean'],
+                'numerical_2': ['sum', 'mean'],
+                'category_1': ['sum', 'mean'], # 0, 1
+                # 'category_2': ['mean'], # 1, 2, 3, 4, 5
+                'category_4': ['sum', 'mean'], # 0, 1
             }
         }
     ]

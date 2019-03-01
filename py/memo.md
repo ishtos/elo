@@ -8,3 +8,9 @@ historicalなどとの組み合わせ方
 店毎の人気や売り上げを作り、店の信頼度を計算する？
 
 category_2 == region
+
+historical_transactionsのcategory_3は、installmentsの区別
+0:0=?
+1:0=一欠損血
+2:2~12,999=分割払い(999は12回以上の分割払い?)
+3:-1=欠損値

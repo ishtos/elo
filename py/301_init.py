@@ -37,7 +37,7 @@ merchants = pd.read_csv('../input/merchants.csv')
 map_dict = {'N': 0, 'Y': 1}
 merchants['category_1'] = merchants['category_1'].apply(lambda x: map_dict[x])
 merchants['category_4'] = merchants['category_4'].apply(lambda x: map_dict[x])
-map_dict = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4}
+map_dict = {'A': 5, 'B': 4, 'C': 3, 'D': 2, 'E': 1}
 merchants['most_recent_sales_range'] = merchants['most_recent_sales_range'].apply(lambda x: map_dict[x])
 merchants['most_recent_purchases_range'] = merchants['most_recent_purchases_range'].apply(lambda x: map_dict[x])
 

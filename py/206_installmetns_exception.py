@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Dec 29 2018
+Created on Fri Dec 18 2018
 
 @author: toshiki.ishikawa
 """
@@ -14,7 +14,8 @@ import numpy as np
 import pandas as pd
 
 from tqdm import tqdm
-from datetime import datetime, date
+# from datetime import datetime, date
+import datetime
 from sklearn.preprocessing import LabelEncoder
 from multiprocessing import cpu_count, Pool
 
@@ -23,37 +24,41 @@ utils.start(__file__)
 #==============================================================================
 NTHREAD = cpu_count()
 
-PREF = 'f305'
+PREF = 'f206'
+
+SUMMARY = 30
 
 KEY = 'card_id'
 
-stats = ['nunique', 'sum', 'mean', 'std']
+stats = ['sum', 'mean', 'std']
+
+# os.system(f'rm ../feature/{PREF}_train.pkl')
+# os.system(f'rm ../feature/{PREF}_test.pkl')
 
 # =============================================================================
 #
 # =============================================================================
 PATH = os.path.join('..', 'data')
 
-merchants = pd.read_csv(os.path.join(PATH, 'merchants.csv'))
-historical_transactions = pd.read_csv(os.path.join(PATH, 'historical_transactions.csv'), usecols=['card_id', 'merchant_id'])
+new_merchant_transactions = pd.read_csv(os.path.join(PATH, 'new_merchant_transactions.csv'), usecols=['card_id', 'installments'])
+new_merchant_transactions = utils.reduce_mem_usage(new_merchant_transactions)
 
-merchants = merchants.drop_duplicates(subset=['merchant_id'], keep='first').reset_index(drop=True) # TODO: change first
-historical_transactions = pd.merge(historical_transactions, merchants, on='merchant_id', how='left')
 
-del merchants
-gc.collect()
+new_merchant_transactions['-1_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == -1, 1, 0))
+new_merchant_transactions['999_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999, 1, 0))
+new_merchant_transactions['exception_installments'] = new_merchant_transactions['installments'].apply(lambda x: np.where(x == 999 or x == -1, 1, 0))
+
 
 # =============================================================================
 #
 # =============================================================================
+
 def aggregate(args):
     prefix, key, num_aggregations = args['prefix'], args['key'], args['num_aggregations']
 
-    agg = historical_transactions.groupby(key).agg(num_aggregations).reset_index()
-    agg.columns = [f'{c[0]}_{c[1]}'.strip('_') for c in agg.columns]
-    agg = agg.add_prefix(prefix)
-    agg = agg.rename(columns={prefix+KEY:KEY})
-
+    agg = new_merchant_transactions.groupby(key).agg(num_aggregations)
+    agg.columns = [prefix + '_'.join(col).strip() for col in agg.columns.values]
+    agg.reset_index(inplace=True)
     agg.to_pickle(f'../feature/{PREF}.pkl')
 
     return
@@ -64,20 +69,12 @@ def aggregate(args):
 if __name__ == '__main__':
     argss = [
         {
-            'prefix': 'merchants_',
-            'key': ['card_id'],
+            'prefix': 'new_',
+            'key': 'card_id',
             'num_aggregations': {
-                'most_recent_sales_range': ['nunique'], 
-                'most_recent_purchases_range': ['nunique'], 
-                'avg_sales_lag3': stats,
-                'avg_purchases_lag3': stats,
-                'active_months_lag3': stats,
-                'avg_sales_lag6': stats,
-                'avg_purchases_lag6': stats,
-                'active_months_lag6': stats,
-                'avg_sales_lag12': stats,
-                'avg_purchases_lag12': stats,
-                'active_months_lag12': stats
+                '-1_installments': stats,
+                '999_installments': stats, 
+                'exception_installments': stats,
             }
         }
     ]
